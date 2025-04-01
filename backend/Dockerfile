@@ -29,7 +29,6 @@ COPY . .
 # Copy the flags and backgrounds into the container
 COPY Game_Backgrounds/ ./Game_Backgrounds/
 
-EXPOSE 3000
-EXPOSE 3001
+EXPOSE 5000
 
 CMD ["node", "server.js"]
