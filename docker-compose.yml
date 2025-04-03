@@ -5,9 +5,9 @@ services:
       context: ./backend
       dockerfile: Dockerfile
     ports:
-      - "5001:5000"  # Map backend service to port 5000
+      - "5001:5001"  # Map backend service to port 5000
     environment:
-      - PORT=5000
+      - PORT=5001
 
   frontend:
     build:
