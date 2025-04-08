@@ -18,8 +18,8 @@ app.use(express.json());
 const db = mysql.createConnection({
     host: "softwareproject.cxmu80uoi8qg.us-west-1.rds.amazonaws.com",
     user: "Aniket",
-    password: "Aniket123",
-    database: "SpotIt", 
+  password: "321tekinA",
+  database: "SpotIt",
     port: 3306
 });
 

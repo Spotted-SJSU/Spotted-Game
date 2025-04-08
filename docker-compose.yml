@@ -1,18 +1,18 @@
 services:
   backend:
+    container_name: spot-backend
     build:
       context: ./backend
       dockerfile: Dockerfile
     ports:
-      - "5001:5001"  # Map backend service to port 5000
+      - "5001:5001"
     environment:
       - PORT=5001
 
   frontend:
+    container_name: spot-frontend
     build:
       context: ./frontend
       dockerfile: Dockerfile
     ports:
-      - "3000:80"  # Frontend service uses port 3000
-    environment:
-      - REACT_APP_API_BASE_URL=http://backend:5000
+      - "80:80"
