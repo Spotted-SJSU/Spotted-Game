@@ -1,3 +1,4 @@
+import { notifications } from "@mantine/notifications";
 import { safeFetch } from "./common";
 
 export interface LoginAPIRequest {
@@ -10,6 +11,13 @@ export const login = async (body: LoginAPIRequest) => {
     method: "POST",
     body: JSON.stringify(body),
   });
+  if (!response.success) {
+    notifications.show({
+      color: "red",
+      title: "Failed to log in",
+      message: "Encountered an error: " + response.error,
+    });
+  }
   return response;
 };
 
@@ -18,5 +26,12 @@ export const register = async (body: LoginAPIRequest) => {
     method: "POST",
     body: JSON.stringify(body),
   });
+  if (!response.success) {
+    notifications.show({
+      color: "red",
+      title: "Failed to register user",
+      message: "Encountered an error: " + response.error,
+    });
+  }
   return response;
 };
