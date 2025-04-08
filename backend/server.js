@@ -58,12 +58,27 @@ app.get("/start", (req, res) => {
     gameData.startTime = Date.now();
     gameData.gameOver = false;
     gameData.score = 0;
-    res.json({ message: "Game started", flagPosition: gameData.flagPosition });
+
+    res.json({
+        success: true,
+        error: null,
+        data: {
+            message: "Game started",
+            flagPosition: gameData.flagPosition
+        }
+    });
 });
+
 
 app.post("/click", (req, res) => {
     if (gameData.gameOver) {
-        return res.json({ message: "Game already over!", score: gameData.score });
+        return res.json({
+            success: false,
+            error: "Game already over!",
+            data: {
+                score: gameData.score
+            }
+        });
     }
 
     const { x, y } = req.body;
@@ -88,83 +103,136 @@ app.post("/click", (req, res) => {
     gameData.score = Math.max(0, Math.round(points));
 
     io.emit("scoreUpdate", gameData.score);
-    res.json({ message, score: gameData.score });
+    res.json({
+        success: true,
+        error: null,
+        data: {
+            message,
+            score: gameData.score
+        }
+    });
 });
+
 
 // --- Auth Routes ---
 app.post("/register", async (req, res) => {
     const { username, password } = req.body;
-    if (!username || !password) return res.status(400).json({ error: "Missing fields" });
+    if (!username || !password) {
+        return res.status(400).json({
+            success: false,
+            error: "Missing fields",
+            data: null
+        });
+    }
 
     // Check if username already exists
     db.query("SELECT * FROM Users WHERE username = ?", [username], async (err, results) => {
         if (err) {
             console.error("DB error:", err);
-            return res.status(500).json({ error: "Database error" });
+            return res.status(500).json({
+                success: false,
+                error: "Database error",
+                data: null
+            });
         }
 
         if (results.length > 0) {
-            return res.status(409).json({ error: "Username already exists" });
+            return res.status(409).json({
+                success: false,
+                error: "Username already exists",
+                data: null
+            });
         }
 
         // Proceed with registration
         const hashedPassword = await bcrypt.hash(password, 10);
-        db.query("INSERT INTO Users (username, password, Email) VALUES (?, ?, ?)", [username, hashedPassword, null], (err, result) => {
+        db.query("INSERT INTO Users (username, password) VALUES (?, ?)", [username, hashedPassword], (err, result) => {
             if (err) {
                 console.error("Registration error:", err);
-                return res.status(500).json({ error: "Failed to register" });
+                return res.status(500).json({
+                    success: false,
+                    error: "Failed to register",
+                    data: null
+                });
             }
-            res.json({ message: "User registered" });
+            res.json({
+                success: true,
+                error: null,
+                data: { message: "User registered" }
+            });
         });
-
     });
 });
+
 
 
 app.post("/login", (req, res) => {
     const { username, password } = req.body;
 
-    console.log("Received login data:", req.body); // Add this line to log request body
-
     if (!username || !password) {
-        return res.status(400).json({ error: "Missing username or password" });
+        return res.status(400).json({
+            success: false,
+            error: "Missing username or password",
+            data: null
+        });
     }
 
     db.query("SELECT * FROM Users WHERE username = ?", [username], async (err, results) => {
         if (err) {
             console.error("DB query error:", err);
-            return res.status(500).json({ error: "Database error" });
+            return res.status(500).json({
+                success: false,
+                error: "Database error",
+                data: null
+            });
         }
 
         if (results.length === 0) {
-            console.log("User not found:", username);
-            return res.status(401).json({ error: "User not found" });
+            return res.status(401).json({
+                success: false,
+                error: "User not found",
+                data: null
+            });
         }
 
         const user = results[0];
         const hashedPassword = user.Password;  // Retrieve the hashed password from the database
 
-        console.log("Hashed password from DB:", hashedPassword); // Add this line to check the stored password
-
         if (!password || !hashedPassword) {
-            console.log("Password or hashed password is missing");
-            return res.status(500).json({ error: "Password comparison error" });
+            return res.status(500).json({
+                success: false,
+                error: "Password comparison error",
+                data: null
+            });
         }
 
         try {
             const match = await bcrypt.compare(password, hashedPassword);
+            //console.log("Retrieved Hashed Password:", hashedPassword);
             if (!match) {
-                console.log("Incorrect password:", username);
-                return res.status(401).json({ error: "Incorrect password" });
+                return res.status(401).json({
+                    success: false,
+                    error: "Incorrect password",
+                    data: null
+                });
             }
 
-            res.json({ message: "Login successful" });
+            res.json({
+                success: true,
+                error: null,
+                data: { message: "Login successful" }
+            });
         } catch (err) {
             console.error("Error during password comparison:", err);
-            res.status(500).json({ error: "Internal server error" });
+            res.status(500).json({
+                success: false,
+                error: "Internal server error",
+                data: null
+            });
         }
     });
 });
+
 
 
 
@@ -173,10 +241,29 @@ app.post("/login", (req, res) => {
 io.on("connection", (socket) => {
     console.log("New player connected!");
 
+    // Emit success response for the new connection
+    socket.emit("connectionResponse", {
+        success: true,
+        error: null,
+        data: {
+            message: "Player connected successfully"
+        }
+    });
+
     socket.on("disconnect", () => {
         console.log("Player disconnected.");
+
+        // Emit success response for disconnection
+        socket.emit("disconnectionResponse", {
+            success: true,
+            error: null,
+            data: {
+                message: "Player disconnected successfully"
+            }
+        });
     });
 });
+
 
 // --- Start Server ---
 const PORT = process.env.PORT || 3000;
