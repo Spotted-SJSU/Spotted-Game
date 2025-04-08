@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useAuthStore } from "../stores/AuthStore";
-import { Button, Flex, Text, TextInput } from "@mantine/core";
+import { Button, Divider, Flex, Text, TextInput, Title } from "@mantine/core";
 import { Form, useForm } from "@mantine/form";
 import { login, register } from "../api/auth-api";
 
@@ -50,6 +50,9 @@ export default function Login() {
       <Flex justify="center" align="center" h="100%">
         <Form form={form}>
           <Flex direction="column" gap="16">
+            {/* TODO: replace with logo */}
+            <Title style={{ textAlign: "center" }}>Spotted</Title>
+            <Divider />
             <TextInput
               required
               type="email"
@@ -90,9 +93,10 @@ export default function Login() {
     );
   }
 
-  if (user) {
-    return showUserInfo();
-  } else {
-    return showLoginForm();
-  }
+  return (
+    <>
+      {user && showUserInfo()}
+      {!user && showLoginForm()}
+    </>
+  );
 }

@@ -1,5 +1,6 @@
 services:
   backend:
+    container_name: spot-backend
     build:
       context: ./backend
       dockerfile: Dockerfile
@@ -9,6 +10,7 @@ services:
       - PORT=5001
 
   frontend:
+    container_name: spot-frontend
     build:
       context: ./frontend
       dockerfile: Dockerfile
