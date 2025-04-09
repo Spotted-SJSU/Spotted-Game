@@ -196,7 +196,7 @@ app.post("/login", (req, res) => {
         }
 
         const user = results[0];
-        const hashedPassword = user.Password;  // Retrieve the hashed password from the database
+        const hashedPassword = user.Password;
 
         if (!password || !hashedPassword) {
             return res.status(500).json({
@@ -208,7 +208,6 @@ app.post("/login", (req, res) => {
 
         try {
             const match = await bcrypt.compare(password, hashedPassword);
-            //console.log("Retrieved Hashed Password:", hashedPassword);
             if (!match) {
                 return res.status(401).json({
                     success: false,
@@ -217,10 +216,14 @@ app.post("/login", (req, res) => {
                 });
             }
 
+            
             res.json({
                 success: true,
                 error: null,
-                data: { message: "Login successful" }
+                data: {
+                    message: "Login successful",
+                    userId: user.UserID
+                }
             });
         } catch (err) {
             console.error("Error during password comparison:", err);
@@ -232,6 +235,7 @@ app.post("/login", (req, res) => {
         }
     });
 });
+
 
 
 
