@@ -39,6 +39,8 @@ let gameData = {
     gameOver: false,
     score: 0
 };
+let activePlayers = new Map();
+
 
 const generateFlagPosition = () => {
     const bgWidth = 800, bgHeight = 600;
@@ -219,7 +221,7 @@ app.post("/login", (req, res) => {
             
             res.json({
                 success: true,
-                error: null,
+                error: nugivll,
                 data: {
                     message: "Login successful",
                     userId: user.UserID
@@ -237,11 +239,21 @@ app.post("/login", (req, res) => {
 });
 
 
+app.get("/active-players", (req, res) => {
+    const players = Array.from(activePlayers.values()); // Return all active players
+    res.json({
+        success: true,
+        error: null,
+        data: players
+    });
+});
+
 
 
 
 
 // --- WebSocket ---
+
 io.on("connection", (socket) => {
     console.log("New player connected!");
 
@@ -254,8 +266,20 @@ io.on("connection", (socket) => {
         }
     });
 
+    // Add player to Active Players when they Login
+    socket.on("login", (userData) => {
+        // Add player to Active Players with userId and username
+        activePlayers.set(userData.userId, {
+            id: userData.userId,
+            username: userData.username
+        });
+        console.log("Active Players:", activePlayers);  // Log to check if player was added
+    });
+
+    // Handle disconnection
     socket.on("disconnect", () => {
         console.log("Player disconnected.");
+        activePlayers.delete(socket.id); // Removes player from active players list
 
         // Emit success response for disconnection
         socket.emit("disconnectionResponse", {
