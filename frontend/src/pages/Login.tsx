@@ -1,14 +1,6 @@
 import React, { useState } from "react";
 import { useAuthStore } from "../stores/AuthStore";
-import {
-  Button,
-  Container,
-  Divider,
-  Flex,
-  Text,
-  TextInput,
-  Title,
-} from "@mantine/core";
+import { Button, Divider, Flex, Text, TextInput, Title } from "@mantine/core";
 import { Form, useForm } from "@mantine/form";
 import { login, register } from "../api/auth-api";
 

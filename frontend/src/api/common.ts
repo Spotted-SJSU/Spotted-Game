@@ -1,5 +1,8 @@
 import { notifications } from "@mantine/notifications";
 
+export const BASE_URL = '/api';
+// export const BASE_URL = 'http://localhost:5001';
+
 export const safeFetch = async (
   input: RequestInfo | URL,
   init?: RequestInit

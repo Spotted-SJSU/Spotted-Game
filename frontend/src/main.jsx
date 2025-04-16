@@ -8,6 +8,7 @@ import '@mantine/core/styles.css';
 import '@mantine/notifications/styles.css';
 import { createTheme, MantineProvider } from '@mantine/core'
 import { Notifications } from '@mantine/notifications'
+import Gameplay from './pages/Gameplay'
 
 const theme = createTheme({ primaryColor: 'yellow' })
 
@@ -19,6 +20,7 @@ createRoot(document.getElementById('root')).render(
         <Routes>
           <Route path='/login' element={ <Login /> } />
           <Route path='/' element={ <Home /> } />
+          <Route path='/game' element={ <Gameplay /> } />
         </Routes>
       </BrowserRouter>
     </MantineProvider>

@@ -1,5 +1,5 @@
 import { notifications } from "@mantine/notifications";
-import { safeFetch } from "./common";
+import { safeFetch, BASE_URL } from "./common";
 
 export interface LoginAPIRequest {
   username: string;
@@ -7,7 +7,7 @@ export interface LoginAPIRequest {
 }
 
 export const login = async (body: LoginAPIRequest) => {
-  const response = await safeFetch(`/api/login`, {
+  const response = await safeFetch(`${BASE_URL}/login`, {
     method: "POST",
     body: JSON.stringify(body),
   });
@@ -22,7 +22,7 @@ export const login = async (body: LoginAPIRequest) => {
 };
 
 export const register = async (body: LoginAPIRequest) => {
-  const response = await safeFetch(`/api/register`, {
+  const response = await safeFetch(`${BASE_URL}/register`, {
     method: "POST",
     body: JSON.stringify(body),
   });
