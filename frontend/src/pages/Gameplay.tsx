@@ -1,23 +1,26 @@
-import { AppShell, Stack, Title } from "@mantine/core";
+import { AppShell, Divider, Stack, Title } from "@mantine/core";
 import React from "react";
-import MainGameFrame from "./components/gameplay/MainGameFrame";
-import ActivePlayersFrame from "./components/gameplay/ActivePlayersFrame";
-import ChatFrame from "./components/gameplay/ChatFrame";
+import MainGameFrame from "./frames/gameplay/MainGameFrame";
+import ActivePlayersFrame from "./frames/gameplay/ActivePlayersFrame";
+import ChatFrame from "./frames/gameplay/ChatFrame";
 
 export default function Gameplay() {
   return (
-    <AppShell>
+    <AppShell withBorder={false}>
       <AppShell.Header p="md">
         <Title>Spot It!</Title>
       </AppShell.Header>
-      <AppShell.Main>
+      <AppShell.Main p="md">
         <MainGameFrame />
       </AppShell.Main>
-      <AppShell.Aside>
-        <Stack>
+      <AppShell.Aside p="md">
+        <AppShell.Section p="md">
           <ActivePlayersFrame />
+        </AppShell.Section>
+        <Divider />
+        <AppShell.Section p="md">
           <ChatFrame />
-        </Stack>
+        </AppShell.Section>
       </AppShell.Aside>
     </AppShell>
   );
