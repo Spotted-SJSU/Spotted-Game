@@ -167,7 +167,6 @@ app.post("/register", async (req, res) => {
 });
 
 
-
 app.post("/login", (req, res) => {
     const { username, password } = req.body;
 
@@ -218,10 +217,15 @@ app.post("/login", (req, res) => {
                 });
             }
 
-            
+            // ✅ Register as active player
+            activePlayers.set(user.UserID, {
+                id: user.UserID,
+                username: user.Username
+            });
+
             res.json({
                 success: true,
-                error: nugivll,
+                error: null,
                 data: {
                     message: "Login successful",
                     userId: user.UserID
@@ -239,6 +243,7 @@ app.post("/login", (req, res) => {
 });
 
 
+
 app.get("/active-players", (req, res) => {
     const players = Array.from(activePlayers.values()); // Return all active players
     res.json({
@@ -253,11 +258,11 @@ app.get("/active-players", (req, res) => {
 
 
 // --- WebSocket ---
-
 io.on("connection", (socket) => {
     console.log("New player connected!");
 
-    // Emit success response for the new connection
+    let userId = null;
+
     socket.emit("connectionResponse", {
         success: true,
         error: null,
@@ -266,29 +271,13 @@ io.on("connection", (socket) => {
         }
     });
 
-    // Add player to Active Players when they Login
-    socket.on("login", (userData) => {
-        // Add player to Active Players with userId and username
-        activePlayers.set(userData.userId, {
-            id: userData.userId,
-            username: userData.username
-        });
-        console.log("Active Players:", activePlayers);  // Log to check if player was added
+    socket.on("registerUserId", (data) => {
+        userId = data.userId;
     });
 
-    // Handle disconnection
     socket.on("disconnect", () => {
         console.log("Player disconnected.");
-        activePlayers.delete(socket.id); // Removes player from active players list
-
-        // Emit success response for disconnection
-        socket.emit("disconnectionResponse", {
-            success: true,
-            error: null,
-            data: {
-                message: "Player disconnected successfully"
-            }
-        });
+        if (userId) activePlayers.delete(userId);
     });
 });
 
