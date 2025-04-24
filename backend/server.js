@@ -105,25 +105,26 @@ app.post("/click", (req, res) => {
         clickedY >= flagY && clickedY <= flagY + height
     ) {
         points = 100 + (30 - timeTaken);
-        //message = `✅ Perfect Click! Time: ${timeTaken.toFixed(2)}s, Score: ${Math.round(points)}`;
+        
     } else {
         const distance = calculateDistance({ x: clickedX, y: clickedY }, { x: flagX, y: flagY });
         points = Math.max(0, 100 - (distance / 10)) + (30 - timeTaken);
-        //message = `Missed! Distance: ${distance.toFixed(2)}, Time: ${timeTaken.toFixed(2)}s, Score: ${Math.round(points)}`;
+       
     }
 
     gameData.score = Math.max(0, Math.round(points));
 
-    io.emit("scoreUpdate", gameData.score);
+    
     res.json({
         success: true,
         error: null,
         data: {
-            //message,
             score: gameData.score
         }
     });
 });
+
+
 
 
 
