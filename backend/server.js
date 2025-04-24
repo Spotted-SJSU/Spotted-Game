@@ -87,19 +87,29 @@ app.post("/click", (req, res) => {
     const { x: flagX, y: flagY } = gameData.flagPosition;
     const { width, height } = gameData.flagSize;
 
+    // Convert normalized coordinates to actual pixel positions
+    const bgWidth = 800, bgHeight = 600;  // Background dimensions
+    const clickedX = x * bgWidth;
+    const clickedY = y * bgHeight;
+
     gameData.gameOver = true;
     const timeTaken = (Date.now() - gameData.startTime) / 1000;
 
     let points;
     let message;
 
-    if (x >= flagX && x <= flagX + width && y >= flagY && y <= flagY + height) {
+
+    // Check for perfect click based on the normalized coordinates
+    if (
+        clickedX >= flagX && clickedX <= flagX + width &&
+        clickedY >= flagY && clickedY <= flagY + height
+    ) {
         points = 100 + (30 - timeTaken);
-        message = `✅ Perfect Click! Time: ${timeTaken.toFixed(2)}s, Score: ${Math.round(points)}`;
+        //message = `✅ Perfect Click! Time: ${timeTaken.toFixed(2)}s, Score: ${Math.round(points)}`;
     } else {
-        const distance = calculateDistance({ x, y }, { x: flagX, y: flagY });
+        const distance = calculateDistance({ x: clickedX, y: clickedY }, { x: flagX, y: flagY });
         points = Math.max(0, 100 - (distance / 10)) + (30 - timeTaken);
-        message = `Missed! Distance: ${distance.toFixed(2)}, Time: ${timeTaken.toFixed(2)}s, Score: ${Math.round(points)}`;
+        //message = `Missed! Distance: ${distance.toFixed(2)}, Time: ${timeTaken.toFixed(2)}s, Score: ${Math.round(points)}`;
     }
 
     gameData.score = Math.max(0, Math.round(points));
@@ -109,11 +119,13 @@ app.post("/click", (req, res) => {
         success: true,
         error: null,
         data: {
-            message,
+            //message,
             score: gameData.score
         }
     });
 });
+
+
 
 
 // --- Auth Routes ---
