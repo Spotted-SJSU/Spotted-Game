@@ -55,21 +55,89 @@ const calculateDistance = (p1, p2) => {
 };
 
 // --- Game Routes ---
+
+const fs = require('fs');
+const path = require('path');
+
+// Game_Backgrounds as static files
+app.use('/Game_Backgrounds', express.static(path.join(__dirname, 'Game_Backgrounds')));
+
 app.get("/start", (req, res) => {
+    // Get files from Game_Backgrounds Folder
+    const backgroundFolder = path.join(__dirname, 'Game_Backgrounds');
+    const files = fs.readdirSync(backgroundFolder);
+
+    const isImage = file => /\.(jpg|jpeg|png)$/i.test(file);
+    const isFlag = file => /_flag\.(jpg|jpeg|png)$/i.test(file);
+    const isBackground = file => !isFlag(file) && isImage(file);
+
+    const backgrounds = files.filter(isBackground);
+    const flags = files.filter(isFlag);
+
+    const randomBackground = backgrounds[Math.floor(Math.random() * backgrounds.length)];
+    const randomFlag = flags[Math.floor(Math.random() * flags.length)];
+
+    // Random difficulty selection
+    const difficulties = ['Easy', 'Medium', 'Hard'];
+    const difficulty = difficulties[Math.floor(Math.random() * difficulties.length)];
+
+    // Base flag size
+    const baseFlagSize = { width: 100, height: 60 };
+    let flagSizeMultiplier = 1;
+
+    if (difficulty === 'Medium') flagSizeMultiplier = 0.9;
+    else if (difficulty === 'Hard') flagSizeMultiplier = 0.8;
+
+    gameData.flagSize = {
+        width: baseFlagSize.width * flagSizeMultiplier,
+        height: baseFlagSize.height * flagSizeMultiplier
+    };
+
+    // Making sure flag is placed within bounds
+    const maxX = 800 - gameData.flagSize.width;
+    const maxY = 600 - gameData.flagSize.height;
+
     gameData.flagPosition = generateFlagPosition();
     gameData.startTime = Date.now();
     gameData.gameOver = false;
     gameData.score = 0;
+
+    const levelInfo = {
+        levelCondition: 'Find the flag!', 
+        difficulty: difficulty,
+        backgroundImageUrl: '/Game_Backgrounds/${randomBackground}',
+        targetImageUrl: '/Game_Backgrounds/${randomFlag}',
+        targetCoords: {
+            top_left: {
+                x: gameData.flagPosition.x / 800,
+                y: gameData.flagPosition.y / 600
+            },
+            bot_right: {
+                x: (gameData.flagPosition.x + gameData.flagSize.width) / 800,
+                y: (gameData.flagPosition.y + gameData.flagSize.height) / 600
+            }
+        },
+        duration: 30
+    };
+
+    //console.log("Selected Background:", randomBackground);
+    //console.log("Selected Flag:", randomFlag);
+    //console.log("Difficulty:", difficulty);
+    //console.log("Flag Size:", gameData.flagSize);
 
     res.json({
         success: true,
         error: null,
         data: {
             message: "Game started",
-            flagPosition: gameData.flagPosition
+            flagPosition: gameData.flagPosition,
+            levelInfo
         }
     });
 });
+
+
+
 
 
 app.post("/click", (req, res) => {
@@ -99,7 +167,7 @@ app.post("/click", (req, res) => {
     let message;
 
 
-    // Check for perfect click based on the normalized coordinates
+    // Check for click based on the normalized coordinates
     if (
         clickedX >= flagX && clickedX <= flagX + width &&
         clickedY >= flagY && clickedY <= flagY + height
@@ -230,7 +298,7 @@ app.post("/login", (req, res) => {
                 });
             }
 
-            // ✅ Register as active player
+            // Register as active player
             activePlayers.set(user.UserID, {
                 id: user.UserID,
                 username: user.Username
