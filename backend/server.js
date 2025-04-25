@@ -55,15 +55,10 @@ const calculateDistance = (p1, p2) => {
 };
 
 // --- Game Routes ---
-
 const fs = require('fs');
 const path = require('path');
 
-// Game_Backgrounds as static files
-app.use('/Game_Backgrounds', express.static(path.join(__dirname, 'Game_Backgrounds')));
-
 app.get("/start", (req, res) => {
-    // Get files from Game_Backgrounds Folder
     const backgroundFolder = path.join(__dirname, 'Game_Backgrounds');
     const files = fs.readdirSync(backgroundFolder);
 
@@ -77,11 +72,9 @@ app.get("/start", (req, res) => {
     const randomBackground = backgrounds[Math.floor(Math.random() * backgrounds.length)];
     const randomFlag = flags[Math.floor(Math.random() * flags.length)];
 
-    // Random difficulty selection
     const difficulties = ['Easy', 'Medium', 'Hard'];
     const difficulty = difficulties[Math.floor(Math.random() * difficulties.length)];
 
-    // Base flag size
     const baseFlagSize = { width: 100, height: 60 };
     let flagSizeMultiplier = 1;
 
@@ -93,7 +86,6 @@ app.get("/start", (req, res) => {
         height: baseFlagSize.height * flagSizeMultiplier
     };
 
-    // Making sure flag is placed within bounds
     const maxX = 800 - gameData.flagSize.width;
     const maxY = 600 - gameData.flagSize.height;
 
@@ -102,11 +94,29 @@ app.get("/start", (req, res) => {
     gameData.gameOver = false;
     gameData.score = 0;
 
+    // Gameplay and Summary Timings
+    const cycleDuration = 50 * 1000; // Total cycle = 40s Gameplay + 10s Summary
+    const now = Date.now();
+    const timeInCycle = now % cycleDuration;
+
+    let levelCondition = "Gameplay";
+    let duration;
+
+    if (timeInCycle >= 40 * 1000) {
+        levelCondition = "Summary";
+        duration = 50 * 1000 - timeInCycle; 
+    } else {
+        levelCondition = "Gameplay";
+        duration = 40 * 1000 - timeInCycle; 
+    }
+
+    duration = Math.ceil(duration / 1000); // Convert milliseconds to seconds for duration to read easier
+
     const levelInfo = {
-        levelCondition: 'Find the flag!', 
-        difficulty: difficulty,
-        backgroundImageUrl: '/Game_Backgrounds/${randomBackground}',
-        targetImageUrl: '/Game_Backgrounds/${randomFlag}',
+        levelCondition,
+        difficulty,
+        backgroundImageUrl: `/Game_Backgrounds/${randomBackground}`,
+        targetImageUrl: `/Game_Backgrounds/${randomFlag}`,
         targetCoords: {
             top_left: {
                 x: gameData.flagPosition.x / 800,
@@ -117,13 +127,8 @@ app.get("/start", (req, res) => {
                 y: (gameData.flagPosition.y + gameData.flagSize.height) / 600
             }
         },
-        duration: 30
+        duration
     };
-
-    //console.log("Selected Background:", randomBackground);
-    //console.log("Selected Flag:", randomFlag);
-    //console.log("Difficulty:", difficulty);
-    //console.log("Flag Size:", gameData.flagSize);
 
     res.json({
         success: true,
