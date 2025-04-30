@@ -146,6 +146,16 @@ app.get("/start", (req, res) => {
 
 
 app.post("/click", (req, res) => {
+    const { userId, x, y } = req.body;
+
+    if (!userId) {
+        return res.json({
+            success: false,
+            error: "Missing userId",
+            data: null
+        });
+    }
+
     if (gameData.gameOver) {
         return res.json({
             success: false,
@@ -156,12 +166,10 @@ app.post("/click", (req, res) => {
         });
     }
 
-    const { x, y } = req.body;
     const { x: flagX, y: flagY } = gameData.flagPosition;
     const { width, height } = gameData.flagSize;
 
-    // Convert normalized coordinates to actual pixel positions
-    const bgWidth = 800, bgHeight = 600;  // Background dimensions
+    const bgWidth = 800, bgHeight = 600;
     const clickedX = x * bgWidth;
     const clickedY = y * bgHeight;
 
@@ -169,33 +177,29 @@ app.post("/click", (req, res) => {
     const timeTaken = (Date.now() - gameData.startTime) / 1000;
 
     let points;
-    let message;
-
-
-    // Check for click based on the normalized coordinates
     if (
         clickedX >= flagX && clickedX <= flagX + width &&
         clickedY >= flagY && clickedY <= flagY + height
     ) {
         points = 100 + (30 - timeTaken);
-        
     } else {
         const distance = calculateDistance({ x: clickedX, y: clickedY }, { x: flagX, y: flagY });
         points = Math.max(0, 100 - (distance / 10)) + (30 - timeTaken);
-       
     }
 
     gameData.score = Math.max(0, Math.round(points));
+    gameData.clickedBy = userId;  // Track which user clicked
 
-    
     res.json({
         success: true,
         error: null,
         data: {
-            score: gameData.score
+            score: gameData.score,
+            clickedBy: userId
         }
     });
 });
+
 
 
 
