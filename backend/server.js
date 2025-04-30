@@ -329,7 +329,7 @@ app.post("/login", (req, res) => {
 });
 
 
-
+/*
 app.get("/active-players", (req, res) => {
     const players = Array.from(activePlayers.values()); // Return all active players
     res.json({
@@ -338,7 +338,7 @@ app.get("/active-players", (req, res) => {
         data: players
     });
 });
-
+*/
 
 
 
@@ -359,13 +359,51 @@ io.on("connection", (socket) => {
 
     socket.on("registerUserId", (data) => {
         userId = data.userId;
+        activePlayers.set(userId, { userId }); // Add to active players
     });
+
 
     socket.on("disconnect", () => {
         console.log("Player disconnected.");
         if (userId) activePlayers.delete(userId);
     });
 });
+
+
+//Active Players Emitting Logic
+const broadcastActivePlayers = () => {
+        const players = Array.from(activePlayers.values());
+        io.emit("activePlayersUpdate", players); // Emit all active players
+    };
+
+setInterval(broadcastActivePlayers, 1000); // emit every second
+
+// Level Condition and Duration Emitting logic
+const cycleDuration = 50 * 1000;
+    const emitGameTimer = () => {
+        const now = Date.now();
+        const timeInCycle = now % cycleDuration;
+
+        let levelCondition = "Gameplay";
+        let duration;
+
+        if (timeInCycle >= 40 * 1000) {
+            levelCondition = "Summary";
+            duration = 50 * 1000 - timeInCycle;
+        } else {
+            levelCondition = "Gameplay";
+            duration = 40 * 1000 - timeInCycle;
+        }
+
+        duration = Math.ceil(duration / 1000); // Convert ms to seconds
+
+        io.emit("gameTimerUpdate", { // Emit to all connected clients
+            levelCondition,
+            duration
+        });
+    };
+const timerInterval = setInterval(emitGameTimer, 1000); // Update every second
+
 
 
 // --- Start Server ---
