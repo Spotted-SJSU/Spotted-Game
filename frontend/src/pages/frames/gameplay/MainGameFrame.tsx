@@ -30,15 +30,18 @@ export default function MainGameFrame() {
   if (level.levelCondition === "Gameplay") {
     return (
       <>
+        <div>Difficulty: {level.difficulty}</div>
         <ImageWithOverlay
           backgroundSrc={level.backgroundImageUrl}
           targetSrc={level.targetImageUrl}
           pos={level.targetCoords}
         />
-        <div>Level: {level.duration}</div>
 
         <CountdownTimer duration={level.duration} />
       </>
     );
+  } else {
+    // TODO: summary screen
+    return <>Summary screen</>
   }
 }
