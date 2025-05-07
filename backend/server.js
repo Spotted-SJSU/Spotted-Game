@@ -15,21 +15,23 @@ app.use(cors());
 app.use(express.json());
 
 // --- MySQL Setup ---
-const db = mysql.createConnection({
+const db = mysql.createPool({
     host: "softwareproject.cxmu80uoi8qg.us-west-1.rds.amazonaws.com",
     user: "Aniket",
-  password: "321tekinA",
-  database: "SpotIt",
-    port: 3306
+    password: "321tekinA",
+    database: "SpotIt",
+    port: 3306,
+    keepAliveInitialDelay: 10000,
+    enableKeepAlive: true,
 });
 
-db.connect((err) => {
-    if (err) {
-        console.error(" DB connection error:", err);
-        process.exit(1);
-    }
-    console.log("Connected to MySQL");
-});
+// db.connect((err) => {
+//     if (err) {
+//         console.error(" DB connection error:", err);
+//         process.exit(1);
+//     }
+//     console.log("Connected to MySQL");
+// });
 
 // --- Game State ---
 let gameData = {
@@ -104,10 +106,10 @@ app.get("/start", (req, res) => {
 
     if (timeInCycle >= 40 * 1000) {
         levelCondition = "Summary";
-        duration = 50 * 1000 - timeInCycle; 
+      duration = 50 * 1000 - timeInCycle;
     } else {
         levelCondition = "Gameplay";
-        duration = 40 * 1000 - timeInCycle; 
+      duration = 40 * 1000 - timeInCycle;
     }
 
     duration = Math.ceil(duration / 1000); // Convert milliseconds to seconds for duration to read easier
@@ -215,8 +217,8 @@ app.post("/click", (req, res) => {
         }
 
         // User exists, update their score
-        db.query("UPDATE Users SET Score = Score + ? WHERE UserID = ?", 
-            [gameData.score, userId], 
+      db.query("UPDATE Users SET Score = Score + ? WHERE UserID = ?",
+        [gameData.score, userId],
             (updateErr) => {
                 if (updateErr) {
                     console.error("Error updating score:", updateErr);
@@ -257,7 +259,7 @@ app.get("/leaderboard", (req, res) => {
                     data: null
                 });
             }
-            
+
             res.json({
                 success: true,
                 error: null,
