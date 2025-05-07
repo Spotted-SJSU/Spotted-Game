@@ -244,7 +244,28 @@ app.post("/click", (req, res) => {
 
 
 
-
+app.get("/leaderboard", (req, res) => {
+    // Get top 5 players by score
+    db.query(
+        "SELECT UserID, Username, Score FROM Users WHERE Score > 0 ORDER BY Score DESC LIMIT 5",
+        (err, results) => {
+            if (err) {
+                console.error("DB query error:", err);
+                return res.status(500).json({
+                    success: false,
+                    error: "Database error",
+                    data: null
+                });
+            }
+            
+            res.json({
+                success: true,
+                error: null,
+                data: results
+            });
+        }
+    );
+});
 
 
 
@@ -449,6 +470,8 @@ const cycleDuration = 50 * 1000;
         });
     };
 const timerInterval = setInterval(emitGameTimer, 1000); // Update every second
+
+
 
 
 
