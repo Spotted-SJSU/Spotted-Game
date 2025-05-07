@@ -190,13 +190,55 @@ app.post("/click", (req, res) => {
     gameData.score = Math.max(0, Math.round(points));
     gameData.clickedBy = userId;  // Track which user clicked
 
-    res.json({
-        success: true,
-        error: null,
-        data: {
-            score: gameData.score,
-            clickedBy: userId
+    // Check if the user exists in the database and update their score
+    db.query("SELECT * FROM Users WHERE UserID = ?", [userId], (err, results) => {
+        if (err) {
+            console.error("DB query error:", err);
+            return res.status(500).json({
+                success: false,
+                error: "Database error",
+                data: null
+            });
         }
+
+        if (results.length === 0) {
+            // User doesn't exist, return the score but don't update the database
+            return res.json({
+                success: true,
+                error: null,
+                data: {
+                    score: gameData.score,
+                    clickedBy: userId,
+                    message: "Score not saved - user not found"
+                }
+            });
+        }
+
+        // User exists, update their score
+        db.query("UPDATE Users SET Score = Score + ? WHERE UserID = ?", 
+            [gameData.score, userId], 
+            (updateErr) => {
+                if (updateErr) {
+                    console.error("Error updating score:", updateErr);
+                    return res.status(500).json({
+                        success: false,
+                        error: "Failed to update score",
+                        data: null
+                    });
+                }
+
+                // Return success with the score
+                res.json({
+                    success: true,
+                    error: null,
+                    data: {
+                        score: gameData.score,
+                        clickedBy: userId,
+                        message: "Score updated successfully"
+                    }
+                });
+            }
+        );
     });
 });
 
