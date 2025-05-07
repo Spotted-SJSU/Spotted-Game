@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router";
 import { useAuthStore } from "../stores/AuthStore";
 import { Button, Divider, Flex, Text, TextInput, Title } from "@mantine/core";
 import { Form, useForm } from "@mantine/form";
@@ -8,6 +9,11 @@ export default function Login() {
   const { user, setUser, resetUser } = useAuthStore();
   const [loading, setLoading] = useState<boolean>(false);
   const form = useForm({});
+  const navigate = useNavigate();
+
+  function joinGame() {
+    navigate("/game");
+  }
 
   function showUserInfo() {
     return (
@@ -21,6 +27,9 @@ export default function Login() {
         <Title>Spotted</Title>
         <Divider />
         <Text>Logged in as {user!.username}!</Text>
+        <Button type="button" onClick={() => joinGame()}>
+          Join Game
+        </Button>
         <Button type="reset" onClick={() => resetUser()}>
           Logout
         </Button>
@@ -41,12 +50,8 @@ export default function Login() {
         return;
       }
 
-      setUser({
-        userID: "", // TODO: populate from response
-        username: username,
-      });
       setLoading(false);
-      form.resetTouched();
+      // form.resetTouched();
     }
 
     async function doLogin() {
@@ -63,7 +68,7 @@ export default function Login() {
       }
 
       setUser({
-        userID: "", // TODO: populate from response
+        id: response.data.userId,
         username: username,
       });
       setLoading(false);

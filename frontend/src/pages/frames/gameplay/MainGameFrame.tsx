@@ -4,8 +4,12 @@ import type { GameplayEventPayload } from "../../../types/GameplayEventPayload";
 import Loading from "../../../components/common/Loading";
 import CountdownTimer from "../../../components/gameplay/CountdownTimer";
 import ImageWithOverlay from "../../../components/gameplay/ImageWithOverlay";
+import { useAuthStore } from "../../../stores/AuthStore";
+import { connect } from "../../../api/player-api";
+import { Navigate } from "react-router";
 
 export default function MainGameFrame() {
+  const { user } = useAuthStore();
   const [loading, setLoading] = useState<boolean>(false);
   const [level, setLevel] = useState<GameplayEventPayload | null>(null);
 
@@ -16,12 +20,18 @@ export default function MainGameFrame() {
 
   useEffect(() => {
     setLoading(true);
-    subscribeToGameplayEvents(onMessage);
-  }, []);
+    connect(user);
+    const timeout = subscribeToGameplayEvents(onMessage);
+    // return () => timeout;
+  }, [user]);
 
-  useEffect(() => {
-    console.table(level);
-  }, [level]);
+  // useEffect(() => {
+  //   console.table(level);
+  // }, [level]);
+
+  if (!user) {
+    return <Navigate to="/login" />;
+  }
 
   if (!level) {
     return <Loading />;
@@ -42,6 +52,6 @@ export default function MainGameFrame() {
     );
   } else {
     // TODO: summary screen
-    return <>Summary screen</>
+    return <>Summary screen</>;
   }
 }

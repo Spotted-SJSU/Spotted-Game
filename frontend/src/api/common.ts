@@ -1,7 +1,11 @@
 import { notifications } from "@mantine/notifications";
+import { io } from "socket.io-client";
 
-export const BASE_URL = '/api';
-// export const BASE_URL = 'http://localhost:5001';
+// export const BASE_URL = '/api';
+
+export const BASE_SCHEME = "http://";
+export const BASE_PATH = "localhost:5001";
+export const BASE_URL = BASE_SCHEME + BASE_PATH;
 
 export const safeFetch = async (
   input: RequestInfo | URL,
@@ -27,3 +31,5 @@ const showError = (errorMessage) => {
     message: "Error fetching data from the backend! " + errorMessage,
   });
 };
+
+export const socket = io(`ws://${BASE_PATH}`);
