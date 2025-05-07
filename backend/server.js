@@ -4,6 +4,8 @@ const socketIo = require("socket.io");
 const http = require("http");
 const mysql = require("mysql2");
 const bcrypt = require("bcrypt");
+const fs = require('fs');
+const path = require('path');
 
 const app = express();
 const server = http.createServer(app);
@@ -39,7 +41,10 @@ let gameData = {
     flagSize: { width: 60, height: 40 },
     startTime: null,
     gameOver: false,
-    score: 0
+    score: 0,
+    backgroundImageUrl: null,
+    targetImageUrl: null,
+    difficulty: null
 };
 let activePlayers = new Map();
 
@@ -56,11 +61,8 @@ const calculateDistance = (p1, p2) => {
     return Math.sqrt((p1.x - p2.x) ** 2 + (p1.y - p2.y) ** 2);
 };
 
-// --- Game Routes ---
-const fs = require('fs');
-const path = require('path');
-
-app.get("/start", (req, res) => {
+// --- Game Functions ---
+const startNewGame = () => {
     const backgroundFolder = path.join(__dirname, 'Game_Backgrounds');
     const files = fs.readdirSync(backgroundFolder);
 
@@ -88,37 +90,19 @@ app.get("/start", (req, res) => {
         height: baseFlagSize.height * flagSizeMultiplier
     };
 
-    const maxX = 800 - gameData.flagSize.width;
-    const maxY = 600 - gameData.flagSize.height;
-
     gameData.flagPosition = generateFlagPosition();
     gameData.startTime = Date.now();
     gameData.gameOver = false;
     gameData.score = 0;
+    gameData.backgroundImageUrl = `/Game_Backgrounds/${randomBackground}`;
+    gameData.targetImageUrl = `/Game_Backgrounds/${randomFlag}`;
+    gameData.difficulty = difficulty;
 
-    // Gameplay and Summary Timings
-    const cycleDuration = 50 * 1000; // Total cycle = 40s Gameplay + 10s Summary
-    const now = Date.now();
-    const timeInCycle = now % cycleDuration;
-
-    let levelCondition = "Gameplay";
-    let duration;
-
-    if (timeInCycle >= 40 * 1000) {
-        levelCondition = "Summary";
-      duration = 50 * 1000 - timeInCycle;
-    } else {
-        levelCondition = "Gameplay";
-      duration = 40 * 1000 - timeInCycle;
-    }
-
-    duration = Math.ceil(duration / 1000); // Convert milliseconds to seconds for duration to read easier
-
-    const levelInfo = {
-        levelCondition,
+    return {
+        levelCondition: "Gameplay",
         difficulty,
-        backgroundImageUrl: `/Game_Backgrounds/${randomBackground}`,
-        targetImageUrl: `/Game_Backgrounds/${randomFlag}`,
+        backgroundImageUrl: gameData.backgroundImageUrl,
+        targetImageUrl: gameData.targetImageUrl,
         targetCoords: {
             top_left: {
                 x: gameData.flagPosition.x / 800,
@@ -128,9 +112,41 @@ app.get("/start", (req, res) => {
                 x: (gameData.flagPosition.x + gameData.flagSize.width) / 800,
                 y: (gameData.flagPosition.y + gameData.flagSize.height) / 600
             }
-        },
-        duration
+        }
     };
+};
+
+
+// Keep the /start endpoint for backward compatibility or testing
+app.get("/start", (req, res) => {
+    // Check if game is active (has players)
+    if (!gameActive) {
+        return res.json({
+            success: false,
+            error: "Game is currently paused - no active players",
+            data: {
+                message: "Please register as a player to start the game"
+            }
+        });
+    }
+    
+    const levelInfo = startNewGame();
+    
+    // Get current cycle position
+    const now = Date.now();
+    const timeInCycle = (now - cycleStartTime) % cycleDuration;
+    let duration;
+
+    if (timeInCycle >= gameplayDuration) {
+        levelInfo.levelCondition = "Summary";
+        duration = cycleDuration - timeInCycle;
+    } else {
+        levelInfo.levelCondition = "Gameplay";
+        duration = gameplayDuration - timeInCycle;
+    }
+
+    levelInfo.duration = Math.ceil(duration / 1000);
+    levelInfo.activePlayers = activePlayers.size;
 
     res.json({
         success: true,
@@ -142,7 +158,6 @@ app.get("/start", (req, res) => {
         }
     });
 });
-
 
 
 
@@ -429,6 +444,14 @@ io.on("connection", (socket) => {
     socket.on("registerUserId", (data) => {
         userId = data.userId;
         activePlayers.set(userId, { userId }); // Add to active players
+        // If this is the first player, we might need to restart the game cycle
+        if (activePlayers.size === 1 && !gameActive) {
+            console.log("First player joined - starting game cycle");
+            gameActive = true;
+            cycleStartTime = Date.now();
+            // Immediately emit game state to provide feedback
+            emitGameTimer();
+        }
     });
 
 
@@ -447,33 +470,96 @@ const broadcastActivePlayers = () => {
 
 setInterval(broadcastActivePlayers, 1000); // emit every second
 
-// Level Condition and Duration Emitting logic
+
+// Level Condition, Game Start, and Duration Emitting logic
 const cycleDuration = 50 * 1000;
-    const emitGameTimer = () => {
-        const now = Date.now();
-        const timeInCycle = now % cycleDuration;
+const gameplayDuration = 40 * 1000;
+const summaryDuration = 10 * 1000;
 
-        let levelCondition = "Gameplay";
-        let duration;
+// Variables to track game state
+let gameActive = false;
+let cycleStartTime = null;
+let pausedTimeInCycle = 0;
 
-        if (timeInCycle >= 40 * 1000) {
-            levelCondition = "Summary";
-            duration = 50 * 1000 - timeInCycle;
-        } else {
-            levelCondition = "Gameplay";
-            duration = 40 * 1000 - timeInCycle;
+const emitGameTimer = () => {
+    // Check if we have active players
+    const playerCount = activePlayers.size;
+    
+    if (playerCount === 0) {
+        // No active players - pause the game if it's running
+        if (gameActive) {
+            gameActive = false;
+            pausedTimeInCycle = (Date.now() - cycleStartTime) % cycleDuration;
+            console.log("Game paused: No active players");
+            
+            // Emit pause notification
+            io.emit("gameTimerUpdate", {
+                levelCondition: "Paused",
+                message: "Waiting for players to join",
+                duration: 0
+            });
         }
+        return; // Don't proceed with game logic
+    } else if (!gameActive) {
+        // Players have joined and game was paused - resume game
+        gameActive = true;
+        cycleStartTime = Date.now() - pausedTimeInCycle;
+        console.log(`Game resumed with ${playerCount} player(s)`);
+    }
 
-        duration = Math.ceil(duration / 1000); // Convert ms to seconds
+    // Calculate current position in game cycle
+    const now = Date.now();
+    const timeInCycle = (now - cycleStartTime) % cycleDuration;
+    
+    let levelCondition;
+    let duration;
+    let gameInfo = null;
 
-        io.emit("gameTimerUpdate", { // Emit to all connected clients
-            levelCondition,
-            duration
-        });
+    if (timeInCycle >= gameplayDuration) {
+        // Summary phase
+        levelCondition = "Summary";
+        duration = cycleDuration - timeInCycle;
+    } else {
+        // Gameplay phase
+        levelCondition = "Gameplay";
+        duration = gameplayDuration - timeInCycle;
+        
+        // If we're at the very beginning of the gameplay phase, start a new game
+        if (timeInCycle < 1000) {  // Within the first second of the gameplay phase
+            gameInfo = startNewGame();
+        }
+    }
+
+    duration = Math.ceil(duration / 1000); // Convert ms to seconds
+
+    // Prepare the update to send to clients
+    const update = {
+        levelCondition,
+        duration,
+        activePlayers: playerCount
     };
+
+    // Include game info if we're starting a new game
+    if (gameInfo) {
+        update.gameInfo = gameInfo;
+        update.gameInfo.duration = duration;
+    }
+
+    // Emit to all connected clients
+    io.emit("gameTimerUpdate", update);
+};
+
+// Initialize the game state when server starts
+cycleStartTime = Date.now();
+if (activePlayers.size > 0) {
+    gameActive = true;
+} else {
+    console.log("Game waiting for players to join");
+}
+
+
+// Then set up the interval
 const timerInterval = setInterval(emitGameTimer, 1000); // Update every second
-
-
 
 
 
