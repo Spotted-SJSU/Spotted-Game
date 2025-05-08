@@ -16,6 +16,10 @@ const io = socketIo(server, {
 app.use(cors());
 app.use(express.json());
 
+// Serve static files from the Game_Backgrounds_Scaled directory
+app.use('/Game_Backgrounds_Scaled', express.static(path.join(__dirname, 'Game_Backgrounds_Scaled')));
+
+
 // --- MySQL Setup ---
 const db = mysql.createPool({
     host: "softwareproject.cxmu80uoi8qg.us-west-1.rds.amazonaws.com",
@@ -63,8 +67,10 @@ const calculateDistance = (p1, p2) => {
 
 // --- Game Functions ---
 const startNewGame = () => {
-    const backgroundFolder = path.join(__dirname, 'Game_Backgrounds');
+    // Updated path to use Game_Backgrounds_Scaled folder
+    const backgroundFolder = path.join(__dirname, 'Game_Backgrounds_Scaled');
     const files = fs.readdirSync(backgroundFolder);
+
 
     const isImage = file => /\.(jpg|jpeg|png)$/i.test(file);
     const isFlag = file => /_flag\.(jpg|jpeg|png)$/i.test(file);
@@ -94,8 +100,9 @@ const startNewGame = () => {
     gameData.startTime = Date.now();
     gameData.gameOver = false;
     gameData.score = 0;
-    gameData.backgroundImageUrl = `/Game_Backgrounds/${randomBackground}`;
-    gameData.targetImageUrl = `/Game_Backgrounds/${randomFlag}`;
+    // Updated URLs to use Game_Backgrounds_Scaled folder
+    gameData.backgroundImageUrl = `/Game_Backgrounds_Scaled/${randomBackground}`;
+    gameData.targetImageUrl = `/Game_Backgrounds_Scaled/${randomFlag}`;
     gameData.difficulty = difficulty;
 
     return {
