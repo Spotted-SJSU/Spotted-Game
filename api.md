@@ -13,8 +13,8 @@
     "levelInfo": {
       "levelCondition": "Gameplay",
       "difficulty": "Medium",
-      "backgroundImageUrl": "/Game_Backgrounds/background1.jpg",
-      "targetImageUrl": "/Game_Backgrounds/flag1.jpg",
+      "backgroundImageUrl": "/Game_Backgrounds_Scaled/background1.jpg",
+      "targetImageUrl": "/Game_Backgrounds_Scaled/flag1.jpg",
       "targetCoords": {
         "top_left": {
           "x": 0.2625,
