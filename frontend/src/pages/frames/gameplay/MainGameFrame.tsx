@@ -7,6 +7,7 @@ import ImageWithOverlay from "../../../components/gameplay/ImageWithOverlay";
 import { useAuthStore } from "../../../stores/AuthStore";
 import { connect } from "../../../api/player-api";
 import { Navigate } from "react-router";
+import { Text, Title } from "@mantine/core";
 
 export default function MainGameFrame() {
   const { user } = useAuthStore();
@@ -14,6 +15,11 @@ export default function MainGameFrame() {
   const [level, setLevel] = useState<GameplayEventPayload | null>(null);
 
   const onMessage = (event: GameplayEventPayload) => {
+    if (level?.targetImageUrl === event.targetImageUrl) {
+      // handles repeated event contents gracefully
+      return;
+    }
+
     setLevel(event);
     if (loading) setLoading(false);
   };
@@ -40,14 +46,15 @@ export default function MainGameFrame() {
   if (level.levelCondition === "Gameplay") {
     return (
       <>
-        <div>Difficulty: {level.difficulty}</div>
+        <Title order={2}>
+          <CountdownTimer duration={level.duration} /> seconds to spot it!
+        </Title>
         <ImageWithOverlay
           backgroundSrc={level.backgroundImageUrl}
           targetSrc={level.targetImageUrl}
           pos={level.targetCoords}
         />
-
-        <CountdownTimer duration={level.duration} />
+        <Text>Difficulty: {level.difficulty}</Text>
       </>
     );
   } else {

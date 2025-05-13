@@ -1,7 +1,6 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { onActivePlayersChanged } from "../../../api/player-api";
 import { User } from "../../../types/auth/User";
-import { ApiResponse } from "../../../types/api/ApiResponse";
 import Loading from "../../../components/common/Loading";
 import { Stack } from "@mantine/core";
 

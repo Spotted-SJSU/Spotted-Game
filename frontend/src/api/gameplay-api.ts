@@ -1,6 +1,8 @@
+import { User } from "../types/auth/User";
 import { GameplayEventPayload } from "../types/GameplayEventPayload";
+import { socket } from "./common";
 
-export const subscribeToGameplayEvents = (
+export const subscribeToGameplayEvents_mock = (
   onMessage: (event: GameplayEventPayload) => void
 ) => {
   const event: GameplayEventPayload = {
@@ -23,10 +25,21 @@ export const subscribeToGameplayEvents = (
     duration: 30,
   };
 
-  // TODO: integrate with backend
   const payload = {
     levelInfo: event,
   };
 
   setTimeout(() => onMessage(event), 1000);
+};
+
+export const subscribeToGameplayEvents = (
+  callback: (event: GameplayEventPayload) => void
+) => {
+  socket.on("levelInfo", (payload: GameplayEventPayload) => {
+    callback(payload);
+  });
+
+  return () => {
+    socket.off("levelInfo", callback);
+  };
 };
