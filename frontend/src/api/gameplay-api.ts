@@ -2,6 +2,9 @@ import { User } from "../types/auth/User";
 import { GameplayEventPayload } from "../types/GameplayEventPayload";
 import { socket } from "./common";
 
+// Replace YOUR_GITHUB_USERNAME with your actual GitHub username
+const BASE_IMAGE_URL = 'https://Spotted-SJSU.github.io/Spotted-Game/images';
+
 export const subscribeToGameplayEvents_mock = (
   onMessage: (event: GameplayEventPayload) => void
 ) => {
@@ -33,13 +36,30 @@ export const subscribeToGameplayEvents_mock = (
 };
 
 export const subscribeToGameplayEvents = (
-  callback: (event: GameplayEventPayload) => void
+  onMessage: (event: GameplayEventPayload) => void
 ) => {
-  socket.on("levelInfo", (payload: GameplayEventPayload) => {
-    callback(payload);
-  });
-
-  return () => {
-    socket.off("levelInfo", callback);
+  const event: GameplayEventPayload = {
+    levelCondition: "Gameplay",
+    difficulty: "Easy",
+    backgroundImageUrl: `${BASE_IMAGE_URL}/USA_1.png`,
+    targetImageUrl: `${BASE_IMAGE_URL}/usa_flag.png`,
+    targetCoords: {
+      top_left: {
+        x: 0.1275,
+        y: 0.7016666666666667,
+      },
+      bot_right: {
+        x: 0.24,
+        y: 0.7916666666666666,
+      },
+    },
+    duration: 30,
   };
+
+  // TODO: integrate with backend
+  const payload = {
+    levelInfo: event,
+  };
+
+  setTimeout(() => onMessage(event), 1000);
 };
