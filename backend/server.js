@@ -456,8 +456,8 @@ io.on("connection", (socket) => {
             console.log("First player joined - starting game cycle");
             gameActive = true;
             cycleStartTime = Date.now();
-            // Immediately emit game state to provide feedback
-            emitGameTimer();
+            // Immediately emit game state to provide feedback MAKE CHANGE FIX HERE
+            emitLevelInfo();
         }
     });
 
@@ -488,87 +488,96 @@ let gameActive = false;
 let cycleStartTime = null;
 let pausedTimeInCycle = 0;
 
-const emitGameTimer = () => {
-    // Check if we have active players
+
+
+
+const emitLevelInfo = () => {
     const playerCount = activePlayers.size;
-    
+
     if (playerCount === 0) {
-        // No active players - pause the game if it's running
         if (gameActive) {
             gameActive = false;
             pausedTimeInCycle = (Date.now() - cycleStartTime) % cycleDuration;
             console.log("Game paused: No active players");
-            
-            // Emit pause notification
-            io.emit("gameTimerUpdate", {
+
+            io.emit("levelInfo", {
                 levelCondition: "Paused",
                 message: "Waiting for players to join",
-                duration: 0
+                duration: 0,
+                activePlayers: 0
             });
         }
-        return; // Don't proceed with game logic
+        return;
     } else if (!gameActive) {
-        // Players have joined and game was paused - resume game
         gameActive = true;
         cycleStartTime = Date.now() - pausedTimeInCycle;
         console.log(`Game resumed with ${playerCount} player(s)`);
     }
 
-    // Calculate current position in game cycle
     const now = Date.now();
     const timeInCycle = (now - cycleStartTime) % cycleDuration;
-    
+
     let levelCondition;
     let duration;
-    let gameInfo = null;
-
-    if (timeInCycle >= gameplayDuration) {
-        // Summary phase
-        levelCondition = "Summary";
-        duration = cycleDuration - timeInCycle;
-    } else {
-        // Gameplay phase
-        levelCondition = "Gameplay";
-        duration = gameplayDuration - timeInCycle;
-        
-        // If we're at the very beginning of the gameplay phase, start a new game
-        if (timeInCycle < 1000) {  // Within the first second of the gameplay phase
-            gameInfo = startNewGame();
-        }
-    }
-
-    duration = Math.ceil(duration / 1000); // Convert ms to seconds
-
-    // Prepare the update to send to clients
-    const update = {
-        levelCondition,
-        duration,
+    let response = {
         activePlayers: playerCount
     };
 
-    // Include game info if we're starting a new game
-    if (gameInfo) {
-        update.gameInfo = gameInfo;
-        update.gameInfo.duration = duration;
+    if (timeInCycle < gameplayDuration) {
+        levelCondition = "Gameplay";
+        duration = gameplayDuration - timeInCycle;
+
+        // Start a new game at the beginning
+        if (timeInCycle < 1000) {
+            response = {
+                ...response,
+                levelCondition,
+                duration: Math.ceil(duration / 1000),
+                ...startNewGame()
+            };
+        } else {
+            response = {
+                ...response,
+                levelCondition,
+                duration: Math.ceil(duration / 1000),
+                difficulty: gameData.difficulty,
+                backgroundImageUrl: gameData.backgroundImageUrl,
+                targetImageUrl: gameData.targetImageUrl,
+                targetCoords: {
+                    top_left: {
+                        x: gameData.flagPosition.x / 800,
+                        y: gameData.flagPosition.y / 600
+                    },
+                    bot_right: {
+                        x: (gameData.flagPosition.x + gameData.flagSize.width) / 800,
+                        y: (gameData.flagPosition.y + gameData.flagSize.height) / 600
+                    }
+                }
+            };
+        }
+    } else {
+        levelCondition = "Summary";
+        duration = cycleDuration - timeInCycle;
+
+        response = {
+            ...response,
+            levelCondition,
+            duration: Math.ceil(duration / 1000),
+            lastGameData: {
+                difficulty: gameData.difficulty,
+                backgroundImageUrl: gameData.backgroundImageUrl,
+                targetImageUrl: gameData.targetImageUrl,
+                clickedBy: gameData.clickedBy || null,
+                score: gameData.score
+            }
+        };
     }
 
-    // Emit to all connected clients
-    io.emit("gameTimerUpdate", update);
+    io.emit("levelInfo", response);
 };
 
-// Initialize the game state when server starts
-cycleStartTime = Date.now();
-if (activePlayers.size > 0) {
-    gameActive = true;
-} else {
-    console.log("Game waiting for players to join");
-}
-
-
-// Then set up the interval
-const timerInterval = setInterval(emitGameTimer, 1000); // Update every second
-
-
+// Send every 10 seconds
+const levelInfoInterval = setInterval(emitLevelInfo, 10000);
 
 // --- Start Server ---
 const PORT = process.env.PORT || 3000;
