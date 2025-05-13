@@ -16,5 +16,5 @@ export default function CountdownTimer(props: CountdownTimerProps) {
     return () => clearInterval(timer);
   }, [duration]);
 
-  return <div>{currentTime}</div>;
+  return <>{currentTime}</>;
 }
