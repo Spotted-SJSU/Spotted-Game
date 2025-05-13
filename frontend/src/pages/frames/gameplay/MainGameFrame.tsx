@@ -7,7 +7,7 @@ import ImageWithOverlay from "../../../components/gameplay/ImageWithOverlay";
 import { useAuthStore } from "../../../stores/AuthStore";
 import { connect } from "../../../api/player-api";
 import { Navigate } from "react-router";
-import { Text, Title } from "@mantine/core";
+import { Text, Group } from "@mantine/core";
 
 export default function MainGameFrame() {
   const { user } = useAuthStore();
@@ -46,19 +46,25 @@ export default function MainGameFrame() {
   if (level.levelCondition === "Gameplay") {
     return (
       <>
-        <Title order={2}>
-          <CountdownTimer duration={level.duration} /> seconds to spot it!
-        </Title>
+        <Group justify="space-between" w="max-content">
+          <Text>Difficulty: {level.difficulty}</Text>
+          <Text>
+            Time left:&nbsp;
+            {<CountdownTimer duration={level.duration} />}
+          </Text>
+        </Group>
         <ImageWithOverlay
           backgroundSrc={level.backgroundImageUrl}
           targetSrc={level.targetImageUrl}
           pos={level.targetCoords}
         />
-        <Text>Difficulty: {level.difficulty}</Text>
       </>
     );
   } else {
-    // TODO: summary screen
-    return <>Summary screen</>;
+    return (
+      <>
+        <Text>Waiting for the next round!</Text>
+      </>
+    );
   }
 }

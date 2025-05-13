@@ -4,6 +4,8 @@ const socketIo = require("socket.io");
 const http = require("http");
 const mysql = require("mysql2");
 const bcrypt = require("bcrypt");
+const fs = require('fs');
+const path = require('path');
 
 const app = express();
 const server = http.createServer(app);
@@ -13,6 +15,10 @@ const io = socketIo(server, {
 
 app.use(cors());
 app.use(express.json());
+
+// Serve static files from the Game_Backgrounds_Scaled directory
+app.use('/Game_Backgrounds_Scaled', express.static(path.join(__dirname, 'Game_Backgrounds_Scaled')));
+
 
 // --- MySQL Setup ---
 const db = mysql.createPool({
@@ -39,7 +45,10 @@ let gameData = {
     flagSize: { width: 60, height: 40 },
     startTime: null,
     gameOver: false,
-    score: 0
+    score: 0,
+    backgroundImageUrl: null,
+    targetImageUrl: null,
+    difficulty: null
 };
 let activePlayers = new Map();
 
@@ -56,13 +65,12 @@ const calculateDistance = (p1, p2) => {
     return Math.sqrt((p1.x - p2.x) ** 2 + (p1.y - p2.y) ** 2);
 };
 
-// --- Game Routes ---
-const fs = require('fs');
-const path = require('path');
-
-app.get("/start", (req, res) => {
-    const backgroundFolder = path.join(__dirname, 'Game_Backgrounds');
+// --- Game Functions ---
+const startNewGame = () => {
+    // Updated path to use Game_Backgrounds_Scaled folder
+    const backgroundFolder = path.join(__dirname, 'Game_Backgrounds_Scaled');
     const files = fs.readdirSync(backgroundFolder);
+
 
     const isImage = file => /\.(jpg|jpeg|png)$/i.test(file);
     const isFlag = file => /_flag\.(jpg|jpeg|png)$/i.test(file);
@@ -88,37 +96,20 @@ app.get("/start", (req, res) => {
         height: baseFlagSize.height * flagSizeMultiplier
     };
 
-    const maxX = 800 - gameData.flagSize.width;
-    const maxY = 600 - gameData.flagSize.height;
-
     gameData.flagPosition = generateFlagPosition();
     gameData.startTime = Date.now();
     gameData.gameOver = false;
     gameData.score = 0;
+    // Updated URLs to use Game_Backgrounds_Scaled folder
+    gameData.backgroundImageUrl = `/Game_Backgrounds_Scaled/${randomBackground}`;
+    gameData.targetImageUrl = `/Game_Backgrounds_Scaled/${randomFlag}`;
+    gameData.difficulty = difficulty;
 
-    // Gameplay and Summary Timings
-    const cycleDuration = 50 * 1000; // Total cycle = 40s Gameplay + 10s Summary
-    const now = Date.now();
-    const timeInCycle = now % cycleDuration;
-
-    let levelCondition = "Gameplay";
-    let duration;
-
-    if (timeInCycle >= 40 * 1000) {
-        levelCondition = "Summary";
-      duration = 50 * 1000 - timeInCycle;
-    } else {
-        levelCondition = "Gameplay";
-      duration = 40 * 1000 - timeInCycle;
-    }
-
-    duration = Math.ceil(duration / 1000); // Convert milliseconds to seconds for duration to read easier
-
-    const levelInfo = {
-        levelCondition,
+    return {
+        levelCondition: "Gameplay",
         difficulty,
-        backgroundImageUrl: `/Game_Backgrounds/${randomBackground}`,
-        targetImageUrl: `/Game_Backgrounds/${randomFlag}`,
+        backgroundImageUrl: gameData.backgroundImageUrl,
+        targetImageUrl: gameData.targetImageUrl,
         targetCoords: {
             top_left: {
                 x: gameData.flagPosition.x / 800,
@@ -128,9 +119,41 @@ app.get("/start", (req, res) => {
                 x: (gameData.flagPosition.x + gameData.flagSize.width) / 800,
                 y: (gameData.flagPosition.y + gameData.flagSize.height) / 600
             }
-        },
-        duration
+        }
     };
+};
+
+
+// Keep the /start endpoint for backward compatibility or testing
+app.get("/start", (req, res) => {
+    // Check if game is active (has players)
+    if (!gameActive) {
+        return res.json({
+            success: false,
+            error: "Game is currently paused - no active players",
+            data: {
+                message: "Please register as a player to start the game"
+            }
+        });
+    }
+    
+    const levelInfo = startNewGame();
+    
+    // Get current cycle position
+    const now = Date.now();
+    const timeInCycle = (now - cycleStartTime) % cycleDuration;
+    let duration;
+
+    if (timeInCycle >= gameplayDuration) {
+        levelInfo.levelCondition = "Summary";
+        duration = cycleDuration - timeInCycle;
+    } else {
+        levelInfo.levelCondition = "Gameplay";
+        duration = gameplayDuration - timeInCycle;
+    }
+
+    levelInfo.duration = Math.ceil(duration / 1000);
+    levelInfo.activePlayers = activePlayers.size;
 
     res.json({
         success: true,
@@ -142,7 +165,6 @@ app.get("/start", (req, res) => {
         }
     });
 });
-
 
 
 
@@ -429,6 +451,14 @@ io.on("connection", (socket) => {
     socket.on("registerUserId", (data) => {
         userId = data.userId;
         activePlayers.set(userId, { userId }); // Add to active players
+        // If this is the first player, we might need to restart the game cycle
+        if (activePlayers.size === 1 && !gameActive) {
+            console.log("First player joined - starting game cycle");
+            gameActive = true;
+            cycleStartTime = Date.now();
+            // Immediately emit game state to provide feedback MAKE CHANGE FIX HERE
+            emitLevelInfo();
+        }
     });
 
 
@@ -447,35 +477,107 @@ const broadcastActivePlayers = () => {
 
 setInterval(broadcastActivePlayers, 1000); // emit every second
 
-// Level Condition and Duration Emitting logic
+
+// Level Condition, Game Start, and Duration Emitting logic
 const cycleDuration = 50 * 1000;
-    const emitGameTimer = () => {
-        const now = Date.now();
-        const timeInCycle = now % cycleDuration;
+const gameplayDuration = 40 * 1000;
+const summaryDuration = 10 * 1000;
 
-        let levelCondition = "Gameplay";
-        let duration;
+// Variables to track game state
+let gameActive = false;
+let cycleStartTime = null;
+let pausedTimeInCycle = 0;
 
-        if (timeInCycle >= 40 * 1000) {
-            levelCondition = "Summary";
-            duration = 50 * 1000 - timeInCycle;
-        } else {
-            levelCondition = "Gameplay";
-            duration = 40 * 1000 - timeInCycle;
+
+
+
+const emitLevelInfo = () => {
+    const playerCount = activePlayers.size;
+
+    if (playerCount === 0) {
+        if (gameActive) {
+            gameActive = false;
+            pausedTimeInCycle = (Date.now() - cycleStartTime) % cycleDuration;
+            console.log("Game paused: No active players");
+
+            io.emit("levelInfo", {
+                levelCondition: "Paused",
+                message: "Waiting for players to join",
+                duration: 0,
+                activePlayers: 0
+            });
         }
+        return;
+    } else if (!gameActive) {
+        gameActive = true;
+        cycleStartTime = Date.now() - pausedTimeInCycle;
+        console.log(`Game resumed with ${playerCount} player(s)`);
+    }
 
-        duration = Math.ceil(duration / 1000); // Convert ms to seconds
+    const now = Date.now();
+    const timeInCycle = (now - cycleStartTime) % cycleDuration;
 
-        io.emit("gameTimerUpdate", { // Emit to all connected clients
-            levelCondition,
-            duration
-        });
+    let levelCondition;
+    let duration;
+    let response = {
+        activePlayers: playerCount
     };
-const timerInterval = setInterval(emitGameTimer, 1000); // Update every second
 
+    if (timeInCycle < gameplayDuration) {
+        levelCondition = "Gameplay";
+        duration = gameplayDuration - timeInCycle;
 
+        // Start a new game at the beginning
+        if (timeInCycle < 1000) {
+            response = {
+                ...response,
+                levelCondition,
+                duration: Math.ceil(duration / 1000),
+                ...startNewGame()
+            };
+        } else {
+            response = {
+                ...response,
+                levelCondition,
+                duration: Math.ceil(duration / 1000),
+                difficulty: gameData.difficulty,
+                backgroundImageUrl: gameData.backgroundImageUrl,
+                targetImageUrl: gameData.targetImageUrl,
+                targetCoords: {
+                    top_left: {
+                        x: gameData.flagPosition.x / 800,
+                        y: gameData.flagPosition.y / 600
+                    },
+                    bot_right: {
+                        x: (gameData.flagPosition.x + gameData.flagSize.width) / 800,
+                        y: (gameData.flagPosition.y + gameData.flagSize.height) / 600
+                    }
+                }
+            };
+        }
+    } else {
+        levelCondition = "Summary";
+        duration = cycleDuration - timeInCycle;
 
+        response = {
+            ...response,
+            levelCondition,
+            duration: Math.ceil(duration / 1000),
+            lastGameData: {
+                difficulty: gameData.difficulty,
+                backgroundImageUrl: gameData.backgroundImageUrl,
+                targetImageUrl: gameData.targetImageUrl,
+                clickedBy: gameData.clickedBy || null,
+                score: gameData.score
+            }
+        };
+    }
 
+    io.emit("levelInfo", response);
+};
+
+// Send every 10 seconds
+const levelInfoInterval = setInterval(emitLevelInfo, 10000);
 
 // --- Start Server ---
 const PORT = process.env.PORT || 3000;

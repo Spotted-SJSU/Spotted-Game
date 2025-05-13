@@ -26,8 +26,8 @@ RUN npm install
 # Copy application code
 COPY . .
 
-# Copy the flags and backgrounds into the container
-COPY Game_Backgrounds/ ./Game_Backgrounds/
+# Copy the scaled flags and backgrounds into the container
+COPY Game_Backgrounds_Scaled/ ./Game_Backgrounds/
 
 EXPOSE 5000
 

@@ -23,9 +23,9 @@ export default function ImageWithOverlay(props: ImageWithOverlayProps) {
   const getBounds = () => {
     if (!bgImageRef) return {};
 
-    const asd = bgImageRef.current?.getClientRects().item(0)!;
-    const left = pos.top_left.x * asd.width;
-    const top = pos.top_left.y * asd.height;
+    const bgImageBounds = bgImageRef.current?.getClientRects().item(0)!;
+    const left = pos.top_left.x * bgImageBounds.width;
+    const top = pos.top_left.y * bgImageBounds.height;
     // const right = pos.bot_right.x * asd.width;
     // const bottom = pos.bot_right.y * asd.height;
     return {
@@ -36,7 +36,12 @@ export default function ImageWithOverlay(props: ImageWithOverlayProps) {
 
   return (
     <div style={{ position: "relative", width: "fit-content", height: "auto" }}>
-      <Image ref={bgImageRef} src={backgroundSrc} onLoad={drawTargetImage} />
+      <Image
+        ref={bgImageRef}
+        src={backgroundSrc}
+        onLoad={drawTargetImage}
+        w="100%"
+      />
       {!isLoading && (
         <img
           src={targetSrc}
