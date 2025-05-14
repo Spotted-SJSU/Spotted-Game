@@ -588,7 +588,17 @@ const emitLevelInfo = () => {
                 backgroundImageUrl: gameData.backgroundImageUrl,
                 targetImageUrl: gameData.targetImageUrl,
                 clickedBy: gameData.clickedBy || null,
-                score: gameData.score
+                score: gameData.score,
+                targetCoords: {
+                    top_left: {
+                        x: gameData.flagPosition.x / 800,
+                        y: gameData.flagPosition.y / 600
+                    },
+                    bot_right: {
+                        x: (gameData.flagPosition.x + gameData.flagSize.width) / 800,
+                        y: (gameData.flagPosition.y + gameData.flagSize.height) / 600
+                    }
+                }
             }
         };
     }
