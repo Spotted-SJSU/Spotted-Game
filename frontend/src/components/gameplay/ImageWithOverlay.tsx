@@ -42,8 +42,6 @@ export default function ImageWithOverlay(props: ImageWithOverlayProps) {
     const bgImageBounds = bgImageRef.current?.getClientRects().item(0)!;
     const left = pos.top_left.x * bgImageBounds.width;
     const top = pos.top_left.y * bgImageBounds.height;
-    // const right = pos.bot_right.x * asd.width;
-    // const bottom = pos.bot_right.y * asd.height;
     return {
       left: left,
       top: top,
@@ -51,18 +49,31 @@ export default function ImageWithOverlay(props: ImageWithOverlayProps) {
   };
 
   return (
-    <div style={{ position: "relative", width: "fit-content", height: "auto" }}>
+    <div
+      style={{
+        position: "relative",
+        width: "fit-content",
+        height: "auto",
+      }}
+    >
       <MantineImage
         ref={bgImageRef}
+        draggable={false}
         src={backgroundSrc}
         onLoad={drawTargetImage}
         w="100%"
+        style={{
+          userSelect: "none",
+        }}
       />
       {!isLoading && isFlagLoaded && (
         <img
           ref={flagImageRef}
           src={targetSrc}
+          draggable={false}
           style={{
+            zIndex: 100,
+            userSelect: "none",
             position: "absolute",
             ...getBounds(),
             opacity: opacity,

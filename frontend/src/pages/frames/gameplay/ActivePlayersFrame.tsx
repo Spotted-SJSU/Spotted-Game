@@ -9,7 +9,7 @@ export default function ActivePlayersFrame() {
   const [loading, setLoading] = useState<boolean>();
 
   const callback = useCallback((players: User[]) => {
-    setPlayers(players);
+    setPlayers(players.filter((p) => !!p && !!p.id));
   }, []);
 
   useEffect(() => {
@@ -24,11 +24,13 @@ export default function ActivePlayersFrame() {
   if (loading) return <Loading />;
 
   return (
-    <Stack>
-      <strong>active players</strong>
-      {players?.map((player) => (
-        <div key={player.id}>{player.username}</div>
-      ))}
+    <Stack gap="sm">
+      <strong>Online ({players.length})</strong>
+      <Stack>
+        {players?.map((player) => (
+          <div key={player.id}>{player.username}</div>
+        ))}
+      </Stack>
     </Stack>
   );
 }
