@@ -7,16 +7,18 @@ import ImageWithOverlay from "../../../components/gameplay/ImageWithOverlay";
 import { useAuthStore } from "../../../stores/AuthStore";
 import { connect } from "../../../api/player-api";
 import { Navigate } from "react-router";
-import { Text, Group, Box, LoadingOverlay } from "@mantine/core";
+import { Text, Group, Box, LoadingOverlay, Container } from "@mantine/core";
+import Summary from "../../../components/gameplay/Summary";
 
 export default function MainGameFrame() {
   const { user } = useAuthStore();
   const [loading, setLoading] = useState<boolean>(false);
   const [level, setLevel] = useState<GameplayEventPayload | null>(null);
-  const [opened, setOpened] = useState<boolean>();
+  const [showSummary, setShowSummary] = useState<boolean>();
 
   const onMessage = useCallback(
     (event: GameplayEventPayload) => {
+      console.log(event);
       setLevel(event);
       if (loading) setLoading(false);
     },
@@ -35,7 +37,7 @@ export default function MainGameFrame() {
   }, [user]);
 
   useEffect(() => {
-    setOpened(isGameplay());
+    setShowSummary(isGameplay());
   }, [level]);
 
   if (!user) {
@@ -47,7 +49,7 @@ export default function MainGameFrame() {
   }
 
   return (
-    <>
+    <Container m="auto">
       <Group justify="space-between" w="max-content">
         <Text>Condition: {level.levelCondition}</Text>
         <Text>Difficulty: {level.difficulty}</Text>
@@ -57,19 +59,19 @@ export default function MainGameFrame() {
           {<CountdownTimer duration={level.duration} />}
         </Text>
       </Group>
-      <Box pos="relative" w="100%">
+      <Box pos="relative" w="fit-content">
         <LoadingOverlay
-          visible={opened}
-          loaderProps={{ children: "Loading..." }}
+          visible={showSummary}
+          loaderProps={{ children: <Summary level={level} /> }}
         />
         <ImageWithOverlay
-          // blockSubmission={}
+          isGameplay={isGameplay()}
           backgroundSrc={level.backgroundImageUrl}
           targetSrc={level.targetImageUrl}
           pos={level.targetCoords}
           opacity={level.opacity}
         />
       </Box>
-    </>
+    </Container>
   );
 }

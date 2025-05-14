@@ -3,6 +3,7 @@ import { Bounds } from "../../types/GameplayEventPayload";
 import { Image as MantineImage } from "@mantine/core";
 
 interface ImageWithOverlayProps {
+  isGameplay: boolean;
   backgroundSrc: string;
   targetSrc: string;
   pos: Bounds;
@@ -10,7 +11,7 @@ interface ImageWithOverlayProps {
 }
 
 export default function ImageWithOverlay(props: ImageWithOverlayProps) {
-  const { backgroundSrc, targetSrc, pos, opacity } = props;
+  const { isGameplay, backgroundSrc, targetSrc, pos, opacity } = props;
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const bgImageRef = useRef<HTMLImageElement>(null);
 
@@ -67,7 +68,7 @@ export default function ImageWithOverlay(props: ImageWithOverlayProps) {
             ...getBounds(),
             opacity: opacity,
           }}
-          width="80px"
+          width={pos.bot_right.x - pos.top_left.x}
           height="auto"
           alt="Flag"
         />

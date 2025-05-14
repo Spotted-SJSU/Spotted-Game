@@ -30,7 +30,7 @@ export default function Login() {
         <Button type="button" onClick={() => joinGame()}>
           Join Game
         </Button>
-        <Button type="reset" onClick={() => resetUser()}>
+        <Button type="reset" variant="subtle" onClick={() => resetUser()}>
           Logout
         </Button>
       </Flex>
