@@ -6,10 +6,11 @@ interface ImageWithOverlayProps {
   backgroundSrc: string;
   targetSrc: string;
   pos: Bounds;
+  opacity: number;
 }
 
 export default function ImageWithOverlay(props: ImageWithOverlayProps) {
-  const { backgroundSrc, targetSrc, pos } = props;
+  const { backgroundSrc, targetSrc, pos, opacity } = props;
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const bgImageRef = useRef<HTMLImageElement>(null);
 
@@ -48,7 +49,7 @@ export default function ImageWithOverlay(props: ImageWithOverlayProps) {
           style={{
             position: "absolute",
             ...getBounds(),
-            opacity: 0.1, // TODO: Get opacity from backend
+            opacity: opacity,
           }}
           width="80px"
           height="auto"

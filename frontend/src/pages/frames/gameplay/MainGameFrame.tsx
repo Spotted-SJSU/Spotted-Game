@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { subscribeToGameplayEvents } from "../../../api/gameplay-api";
-import type { GameplayEventPayload } from "../../../types/GameplayEventPayload";
+import { GameplayEventPayload } from "../../../types/GameplayEventPayload";
 import Loading from "../../../components/common/Loading";
 import CountdownTimer from "../../../components/gameplay/CountdownTimer";
 import ImageWithOverlay from "../../../components/gameplay/ImageWithOverlay";
@@ -58,6 +58,7 @@ export default function MainGameFrame() {
           backgroundSrc={level.backgroundImageUrl}
           targetSrc={level.targetImageUrl}
           pos={level.targetCoords}
+          opacity={(level as any).opacity ?? 0.8}
         />
       </>
     );

@@ -69,6 +69,7 @@ let gameData = {
     backgroundImageUrl: null,
     targetImageUrl: null,
     difficulty: null,
+    opacity: 1,
     clickedBy: null
 };
 let activePlayers = new Map();
@@ -108,9 +109,18 @@ const startNewGame = () => {
 
     const baseFlagSize = { width: 100, height: 60 };
     let flagSizeMultiplier = 1;
+    let opacity = 1; // Default opacity
 
-    if (difficulty === 'Medium') flagSizeMultiplier = 0.9;
-    else if (difficulty === 'Hard') flagSizeMultiplier = 0.8;
+    if (difficulty === 'Medium') {
+        flagSizeMultiplier = 0.9;
+        opacity = 0.3;
+    } else if (difficulty === 'Hard') {
+        flagSizeMultiplier = 0.8;
+        opacity = 0.1;
+    } else {
+        // Easy mode
+        opacity = 0.4;
+    }
 
     gameData = {
         flagSize: {
@@ -124,6 +134,7 @@ const startNewGame = () => {
         backgroundImageUrl: randomImages.background,
         targetImageUrl: randomImages.flag,
         difficulty: difficulty,
+        opacity: opacity,
         clickedBy: null
     };
     
@@ -562,6 +573,7 @@ const emitLevelInfo = () => {
                 difficulty: gameData.difficulty,
                 backgroundImageUrl: gameData.backgroundImageUrl,
                 targetImageUrl: gameData.targetImageUrl,
+                opacity: gameData.opacity,
                 targetCoords: {
                     top_left: {
                         x: gameData.flagPosition.x / 800,
@@ -587,6 +599,7 @@ const emitLevelInfo = () => {
                 difficulty: gameData.difficulty,
                 backgroundImageUrl: gameData.backgroundImageUrl,
                 targetImageUrl: gameData.targetImageUrl,
+                opacity: gameData.opacity,
                 clickedBy: gameData.clickedBy || null,
                 score: gameData.score,
                 targetCoords: {
