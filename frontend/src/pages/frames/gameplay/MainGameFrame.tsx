@@ -27,13 +27,13 @@ export default function MainGameFrame() {
   useEffect(() => {
     setLoading(true);
     connect(user);
-    const timeout = subscribeToGameplayEvents(onMessage);
-    // return () => timeout;
+    const stopListening = subscribeToGameplayEvents(onMessage);
+    return () => stopListening();
   }, [user]);
 
-  // useEffect(() => {
-  //   console.table(level);
-  // }, [level]);
+  useEffect(() => {
+    console.table(level);
+  }, [level]);
 
   if (!user) {
     return <Navigate to="/login" />;
