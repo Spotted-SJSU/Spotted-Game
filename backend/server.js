@@ -124,8 +124,8 @@ const startNewGame = () => {
 
     gameData = {
         flagSize: {
-            width: baseFlagSize.width * flagSizeMultiplier,
-            height: baseFlagSize.height * flagSizeMultiplier
+        width: baseFlagSize.width * flagSizeMultiplier,
+        height: baseFlagSize.height * flagSizeMultiplier
         },
         flagPosition: generateFlagPosition(),
         startTime: Date.now(),
