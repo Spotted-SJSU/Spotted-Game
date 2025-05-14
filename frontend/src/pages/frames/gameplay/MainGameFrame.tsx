@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { subscribeToGameplayEvents } from "../../../api/gameplay-api";
-import type { GameplayEventPayload } from "../../../types/GameplayEventPayload";
+import { GameplayEventPayload } from "../../../types/GameplayEventPayload";
 import Loading from "../../../components/common/Loading";
 import CountdownTimer from "../../../components/gameplay/CountdownTimer";
 import ImageWithOverlay from "../../../components/gameplay/ImageWithOverlay";
@@ -8,7 +8,6 @@ import { useAuthStore } from "../../../stores/AuthStore";
 import { connect } from "../../../api/player-api";
 import { Navigate } from "react-router";
 import { Text, Group, Modal, Popover } from "@mantine/core";
-import { useDisclosure } from "@mantine/hooks";
 
 export default function MainGameFrame() {
   const { user } = useAuthStore();
@@ -80,6 +79,7 @@ export default function MainGameFrame() {
             backgroundSrc={level.backgroundImageUrl}
             targetSrc={level.targetImageUrl}
             pos={level.targetCoords}
+            opacity={level.opacity}
           />
         </Popover.Target>
         <Popover.Dropdown>

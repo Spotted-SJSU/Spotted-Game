@@ -5,6 +5,7 @@ export interface GameplayEventPayload {
   targetImageUrl: string;
   targetCoords: Bounds;
   duration: number;
+  opacity: number;
 }
 
 export interface Bounds {
