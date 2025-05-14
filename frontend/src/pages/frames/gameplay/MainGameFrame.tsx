@@ -7,7 +7,7 @@ import ImageWithOverlay from "../../../components/gameplay/ImageWithOverlay";
 import { useAuthStore } from "../../../stores/AuthStore";
 import { connect } from "../../../api/player-api";
 import { Navigate } from "react-router";
-import { Text, Group, Modal, Popover } from "@mantine/core";
+import { Text, Group, Box, LoadingOverlay } from "@mantine/core";
 
 export default function MainGameFrame() {
   const { user } = useAuthStore();
@@ -35,7 +35,7 @@ export default function MainGameFrame() {
   }, [user]);
 
   useEffect(() => {
-    setOpened(!isGameplay());
+    setOpened(isGameplay());
   }, [level]);
 
   if (!user) {
@@ -49,43 +49,27 @@ export default function MainGameFrame() {
   return (
     <>
       <Group justify="space-between" w="max-content">
-        {/* TODO: remove condition */}
         <Text>Condition: {level.levelCondition}</Text>
         <Text>Difficulty: {level.difficulty}</Text>
+        <Text>Opacity: {level.opacity}</Text>
         <Text>
           Time left:&nbsp;
           {<CountdownTimer duration={level.duration} />}
         </Text>
       </Group>
-      {opened}
-      <Popover
-        opened={opened}
-        onChange={setOpened}
-        width={320}
-        shadow="xs"
-        withOverlay
-        closeOnClickOutside={false}
-        closeOnEscape={false}
-        overlayProps={{
-          zIndex: 10000,
-          blur: "2px",
-          backgroundOpacity: 0.1,
-        }}
-        zIndex={10001}
-      >
-        <Popover.Target>
-          <ImageWithOverlay
-            // blockSubmission={}
-            backgroundSrc={level.backgroundImageUrl}
-            targetSrc={level.targetImageUrl}
-            pos={level.targetCoords}
-            opacity={level.opacity}
-          />
-        </Popover.Target>
-        <Popover.Dropdown>
-          <>asd123</>
-        </Popover.Dropdown>
-      </Popover>
+      <Box pos="relative" w="100%">
+        <LoadingOverlay
+          visible={opened}
+          loaderProps={{ children: "Loading..." }}
+        />
+        <ImageWithOverlay
+          // blockSubmission={}
+          backgroundSrc={level.backgroundImageUrl}
+          targetSrc={level.targetImageUrl}
+          pos={level.targetCoords}
+          opacity={level.opacity}
+        />
+      </Box>
     </>
   );
 }

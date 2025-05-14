@@ -12,25 +12,13 @@ interface ImageWithOverlayProps {
 export default function ImageWithOverlay(props: ImageWithOverlayProps) {
   const { backgroundSrc, targetSrc, pos, opacity } = props;
   const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [isFlagLoaded, setIsFlagLoaded] = useState<boolean>(false);
   const bgImageRef = useRef<HTMLImageElement>(null);
-  const flagImageRef = useRef<HTMLImageElement>(null);
 
   useEffect(() => {
-    // Reset loading states when sources change
     setIsLoading(true);
-    setIsFlagLoaded(false);
   }, [backgroundSrc, targetSrc]);
 
   const drawTargetImage = () => {
-    // Preload the flag image
-    const flagImg = document.createElement('img');
-    flagImg.onload = () => {
-      setIsFlagLoaded(true);
-    };
-    flagImg.src = targetSrc;
-    
-    // Allow a small delay for layout calculations
     setTimeout(() => {
       setIsLoading(false);
     }, 1500);
@@ -68,9 +56,8 @@ export default function ImageWithOverlay(props: ImageWithOverlayProps) {
           userSelect: "none",
         }}
       />
-      {!isLoading && isFlagLoaded && (
+      {!isLoading && (
         <img
-          ref={flagImageRef}
           src={targetSrc}
           draggable={false}
           style={{
