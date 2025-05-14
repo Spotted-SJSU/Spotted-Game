@@ -278,7 +278,7 @@ app.post("/click", (req, res) => {
         // User exists, update their score
         db.query("UPDATE Users SET Score = Score + ? WHERE UserID = ?",
             [playerScore, userId],
-            (updateErr) => {
+            (updateErr, updateResult) => {
                 if (updateErr) {
                     console.error("Error updating score:", updateErr);
                     return res.status(500).json({
@@ -287,6 +287,8 @@ app.post("/click", (req, res) => {
                         data: null
                     });
                 }
+
+                console.log(`Updated score for user ${userId}, added ${playerScore} points. Affected rows: ${updateResult.affectedRows}`);
 
                 // Return success with the score
                 res.json({
@@ -357,7 +359,7 @@ app.post("/register", async (req, res) => {
 
         // Proceed with registration
         const hashedPassword = await bcrypt.hash(password, 10);
-        db.query("INSERT INTO Users (username, password) VALUES (?, ?)", [username, hashedPassword], (err, result) => {
+        db.query("INSERT INTO Users (username, password, Score) VALUES (?, ?, 0)", [username, hashedPassword], (err, result) => {
             if (err) {
                 console.error("Registration error:", err);
                 return res.status(500).json({
@@ -716,4 +718,13 @@ const levelInfoInterval = setInterval(emitLevelInfo, 10000);
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
     console.log(`🚀 Server running on port ${PORT}`);
+    
+    // Initialize scores for existing users with NULL scores
+    db.query("UPDATE Users SET Score = 0 WHERE Score IS NULL", (err, result) => {
+        if (err) {
+            console.error("Error initializing scores:", err);
+        } else if (result.affectedRows > 0) {
+            console.log(`Initialized scores for ${result.affectedRows} users`);
+        }
+    });
 });
