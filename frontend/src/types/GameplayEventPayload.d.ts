@@ -6,6 +6,7 @@ export interface GameplayEventPayload {
   targetCoords: Bounds;
   duration: number;
   opacity: number;
+  score: number;
 }
 
 export interface Bounds {

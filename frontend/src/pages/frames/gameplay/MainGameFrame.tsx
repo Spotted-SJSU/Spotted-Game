@@ -15,6 +15,7 @@ export default function MainGameFrame() {
   const [loading, setLoading] = useState<boolean>(false);
   const [level, setLevel] = useState<GameplayEventPayload | null>(null);
   const [showSummary, setShowSummary] = useState<boolean>();
+  const [score, setScore] = useState<number>(0);
 
   const onMessage = useCallback(
     (event: GameplayEventPayload) => {
@@ -26,8 +27,17 @@ export default function MainGameFrame() {
   );
 
   const isGameplay = useCallback(() => {
-    return level?.levelCondition !== "Gameplay";
+    return level?.levelCondition === "Gameplay" && score === 0;
+  }, [level, score]);
+
+  useEffect(() => {
+    setScore(level?.score ?? 0);
+    setShowSummary(!isGameplay() && score > 0);
   }, [level]);
+
+  useEffect(() => {
+    setShowSummary(!isGameplay() && score > 0);
+  }, [score]);
 
   useEffect(() => {
     setLoading(true);
@@ -35,10 +45,6 @@ export default function MainGameFrame() {
     const stopListening = subscribeToGameplayEvents(onMessage);
     return () => stopListening();
   }, [user]);
-
-  useEffect(() => {
-    setShowSummary(isGameplay());
-  }, [level]);
 
   if (!user) {
     return <Navigate to="/login" />;
@@ -53,7 +59,7 @@ export default function MainGameFrame() {
       <Group justify="space-between" w="max-content">
         <Text>Condition: {level.levelCondition}</Text>
         <Text>Difficulty: {level.difficulty}</Text>
-        <Text>Opacity: {level.opacity}</Text>
+        {score && <Text>Score: {score}</Text>}
         <Text>
           Time left:&nbsp;
           {<CountdownTimer duration={level.duration} />}
@@ -62,7 +68,9 @@ export default function MainGameFrame() {
       <Box pos="relative" w="fit-content">
         <LoadingOverlay
           visible={showSummary}
-          loaderProps={{ children: <Summary level={level} /> }}
+          loaderProps={{
+            children: <Summary level={level} score={score ?? 0} />,
+          }}
         />
         <ImageWithOverlay
           isGameplay={isGameplay()}
@@ -70,6 +78,7 @@ export default function MainGameFrame() {
           targetSrc={level.targetImageUrl}
           pos={level.targetCoords}
           opacity={level.opacity}
+          onUserSubmitted={(newScore) => setScore(newScore)}
         />
       </Box>
     </Container>

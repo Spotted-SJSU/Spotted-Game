@@ -1,6 +1,9 @@
 import React, { useRef, useState, useEffect } from "react";
 import { Bounds } from "../../types/GameplayEventPayload";
 import { Image as MantineImage } from "@mantine/core";
+import { useMouse } from "@mantine/hooks";
+import { submitClick } from "../../api/gameplay-api";
+import { useAuthStore } from "../../stores/AuthStore";
 
 interface ImageWithOverlayProps {
   isGameplay: boolean;
@@ -8,12 +11,22 @@ interface ImageWithOverlayProps {
   targetSrc: string;
   pos: Bounds;
   opacity: number;
+  onUserSubmitted: (newScore: number) => void;
 }
 
 export default function ImageWithOverlay(props: ImageWithOverlayProps) {
-  const { isGameplay, backgroundSrc, targetSrc, pos, opacity } = props;
+  const { user } = useAuthStore();
+  const {
+    isGameplay,
+    backgroundSrc,
+    targetSrc,
+    pos,
+    opacity,
+    onUserSubmitted,
+  } = props;
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const bgImageRef = useRef<HTMLImageElement>(null);
+  const mouse = useMouse();
 
   useEffect(() => {
     setIsLoading(true);
@@ -31,12 +44,24 @@ export default function ImageWithOverlay(props: ImageWithOverlayProps) {
     const bgImageBounds = bgImageRef.current?.getClientRects().item(0)!;
     const left = pos.top_left.x * bgImageBounds.width;
     const top = pos.top_left.y * bgImageBounds.height;
-    // const right = pos.bot_right.x * asd.width;
-    // const bottom = pos.bot_right.y * asd.height;
+    // const right = pos.bot_right.x * bgImageBounds.width;
+    // const bottom = pos.bot_right.y * bgImageBounds.height;
     return {
       left: left,
       top: top,
     };
+  };
+
+  const trySubmitClick = async () => {
+    if (!isGameplay) return;
+
+    const bgImageBounds = bgImageRef.current?.getClientRects().item(0)!;
+    const xNormalized = (mouse.x - bgImageBounds.x) / bgImageBounds.width;
+    const yNormalized = (mouse.y - bgImageBounds.y) / bgImageBounds.height;
+    console.log(xNormalized, yNormalized);
+
+    const response = await submitClick(user!, xNormalized, yNormalized);
+    onUserSubmitted(response!.score);
   };
 
   return (
@@ -46,6 +71,7 @@ export default function ImageWithOverlay(props: ImageWithOverlayProps) {
         width: "fit-content",
         height: "auto",
       }}
+      onClick={() => trySubmitClick()}
     >
       <MantineImage
         ref={bgImageRef}

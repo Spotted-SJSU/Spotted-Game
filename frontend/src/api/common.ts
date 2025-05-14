@@ -1,5 +1,6 @@
 import { notifications } from "@mantine/notifications";
 import { io } from "socket.io-client";
+import { ApiResponse } from "../types/api/ApiResponse";
 
 // export const BASE_URL = '/api';
 
@@ -7,16 +8,17 @@ export const BASE_SCHEME = "http://";
 export const BASE_PATH = "localhost:5001";
 export const BASE_URL = BASE_SCHEME + BASE_PATH;
 
-export const safeFetch = async (
+export const safeFetch = async <T>(
   input: RequestInfo | URL,
   init?: RequestInit
-): Promise<any> => {
+): Promise<ApiResponse<T>> => {
   return fetch(input, {
     ...init,
     headers: {
       ...init?.headers,
       "Content-Type": "application/json",
     },
+    cache: "no-cache",
   })
     .then((response) => response.json())
     .catch((error: Error) => {
