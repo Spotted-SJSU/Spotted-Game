@@ -587,13 +587,6 @@ const emitLevelInfo = () => {
             gameActive = false;
             pausedTimeInCycle = (Date.now() - cycleStartTime) % cycleDuration;
             console.log("Game paused: No active players");
-
-            io.emit("levelInfo", {
-                levelCondition: "Paused",
-                message: "Waiting for players to join",
-                duration: 0,
-                activePlayers: 0
-            });
         }
         return;
     } else if (!gameActive) {
@@ -612,16 +605,17 @@ const emitLevelInfo = () => {
         activePlayers: playerCount
     };
 
-    // Start new game if:
-    // 1. We're at the start of a cycle (timeInCycle < 1000)
-    // 2. OR we've moved from summary to gameplay phase
-    const isNewCycle = timeInCycle < 1000;
-    const movedToGameplay = timeInCycle < lastCycleTime;
-    const shouldStartNewGame = isNewCycle || movedToGameplay;
+    // Calculate remaining time in gameplay phase
+    const remainingGameplayTime = Math.floor((gameplayDuration - timeInCycle) / 1000);
+    
+    // Calculate remaining time in summary phase
+    const remainingSummaryTime = Math.floor((cycleDuration - timeInCycle) / 1000);
 
-    if (timeInCycle < gameplayDuration) {
+    // Determine phase and duration
+    if (timeInCycle < gameplayDuration && remainingGameplayTime > 0) {
+        // Normal gameplay phase with positive duration
         levelCondition = "Gameplay";
-        duration = Math.floor((gameplayDuration - timeInCycle) / 10000) * 10;
+        duration = remainingGameplayTime;
 
         if (shouldStartNewGame) {
             console.log("Starting new game in gameplay phase");
@@ -655,9 +649,54 @@ const emitLevelInfo = () => {
                 score: gameData.score
             };
         }
-    } else {
+    } else if (timeInCycle < gameplayDuration) {
+        // Gameplay would be 0, transition to summary with 10s
         levelCondition = "Summary";
-        duration = Math.floor((cycleDuration - timeInCycle) / 10000) * 10;
+        duration = 10;
+        console.log("Transitioning to summary phase with 10s duration");
+
+        response = {
+            ...response,
+            levelCondition,
+            difficulty: gameData.difficulty,
+            backgroundImageUrl: gameData.backgroundImageUrl,
+            targetImageUrl: gameData.targetImageUrl,
+            targetCoords: {
+                top_left: {
+                    x: gameData.flagPosition.x / 800,
+                    y: gameData.flagPosition.y / 600
+                },
+                bot_right: {
+                    x: (gameData.flagPosition.x + gameData.flagSize.width) / 800,
+                    y: (gameData.flagPosition.y + gameData.flagSize.height) / 600
+                }
+            },
+            duration,
+            opacity: gameData.opacity,
+            score: gameData.score,
+            lastGameData: {
+                difficulty: gameData.difficulty,
+                backgroundImageUrl: gameData.backgroundImageUrl,
+                targetImageUrl: gameData.targetImageUrl,
+                opacity: gameData.opacity,
+                clickedBy: gameData.clickedBy || null,
+                score: gameData.score,
+                targetCoords: {
+                    top_left: {
+                        x: gameData.flagPosition.x / 800,
+                        y: gameData.flagPosition.y / 600
+                    },
+                    bot_right: {
+                        x: (gameData.flagPosition.x + gameData.flagSize.width) / 800,
+                        y: (gameData.flagPosition.y + gameData.flagSize.height) / 600
+                    }
+                }
+            }
+        };
+    } else if (remainingSummaryTime > 0) {
+        // Normal summary phase with positive duration
+        levelCondition = "Summary";
+        duration = remainingSummaryTime;
         console.log("In summary phase");
 
         response = {
@@ -698,6 +737,9 @@ const emitLevelInfo = () => {
                 }
             }
         };
+    } else {
+        // Skip emitting if we would have sent a duration 0 event
+        return;
     }
 
     lastCycleTime = timeInCycle;
