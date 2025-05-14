@@ -1,6 +1,6 @@
-import React, { useRef, useState } from "react";
+import React, { useRef, useState, useEffect } from "react";
 import { Bounds } from "../../types/GameplayEventPayload";
-import { Image } from "@mantine/core";
+import { Image as MantineImage } from "@mantine/core";
 
 interface ImageWithOverlayProps {
   backgroundSrc: string;
@@ -12,13 +12,28 @@ interface ImageWithOverlayProps {
 export default function ImageWithOverlay(props: ImageWithOverlayProps) {
   const { backgroundSrc, targetSrc, pos, opacity } = props;
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [isFlagLoaded, setIsFlagLoaded] = useState<boolean>(false);
   const bgImageRef = useRef<HTMLImageElement>(null);
+  const flagImageRef = useRef<HTMLImageElement>(null);
+
+  useEffect(() => {
+    // Reset loading states when sources change
+    setIsLoading(true);
+    setIsFlagLoaded(false);
+  }, [backgroundSrc, targetSrc]);
 
   const drawTargetImage = () => {
-    // draw flag after 1.5s to allow large bg images to load
+    // Preload the flag image
+    const flagImg = document.createElement('img');
+    flagImg.onload = () => {
+      setIsFlagLoaded(true);
+    };
+    flagImg.src = targetSrc;
+    
+    // Allow a small delay for layout calculations
     setTimeout(() => {
       setIsLoading(false);
-    }, 1500);
+    }, 100);
   };
 
   const getBounds = () => {
@@ -37,14 +52,15 @@ export default function ImageWithOverlay(props: ImageWithOverlayProps) {
 
   return (
     <div style={{ position: "relative", width: "fit-content", height: "auto" }}>
-      <Image
+      <MantineImage
         ref={bgImageRef}
         src={backgroundSrc}
         onLoad={drawTargetImage}
         w="100%"
       />
-      {!isLoading && (
+      {!isLoading && isFlagLoaded && (
         <img
+          ref={flagImageRef}
           src={targetSrc}
           style={{
             position: "absolute",

@@ -35,16 +35,16 @@ const IMAGES = {
         'https://i.imgur.com/pKl0koc.png'
     ],
     flags: [
-        'https://i.imgur.com/vQVXe6G.png',
-        'https://i.imgur.com/L6pOmMU.png',
-        'https://i.imgur.com/bwz3AXh.png',
-        'https://i.imgur.com/lOxVVHd.png',
-        'https://i.imgur.com/5toV7Af.png',
-        'https://i.imgur.com/xYUpM8V.png',
-        'https://i.imgur.com/kuD2kV5.png',
-        'https://i.imgur.com/CtbXXi3.png',
-        'https://i.imgur.com/7DGaKkX.png',
-        'https://i.imgur.com/WpGlGEX.png'
+        'https://flagcdn.com/w160/fr.png', // France
+        'https://flagcdn.com/w160/de.png', // Germany
+        'https://flagcdn.com/w160/it.png', // Italy
+        'https://flagcdn.com/w160/jp.png', // Japan
+        'https://flagcdn.com/w160/kr.png', // South Korea
+        'https://flagcdn.com/w160/es.png', // Spain
+        'https://flagcdn.com/w160/se.png', // Sweden
+        'https://flagcdn.com/w160/ch.png', // Switzerland
+        'https://flagcdn.com/w160/gb.png', // UK
+        'https://flagcdn.com/w160/us.png'  // USA
     ]
 };
 
@@ -109,13 +109,13 @@ const startNewGame = () => {
 
     const baseFlagSize = { width: 100, height: 60 };
     let flagSizeMultiplier = 1;
-    let opacity = 1; // Default opacity
+    let opacity = 0; // Default opacity
 
     if (difficulty === 'Medium') {
-        flagSizeMultiplier = 0.9;
+        flagSizeMultiplier = 0.7;
         opacity = 0.3;
     } else if (difficulty === 'Hard') {
-        flagSizeMultiplier = 0.8;
+        flagSizeMultiplier = 0.5;
         opacity = 0.1;
     } else {
         // Easy mode
