@@ -467,6 +467,14 @@ io.on("connection", (socket) => {
         console.log(`Player ${userId} registered`);
         activePlayers.set(userId, { userId }); // Add to active players
         
+        // Initialize game state if needed
+        if (!gameData.flagPosition || !gameActive) {
+            console.log("Initializing new game state");
+            gameActive = true;
+            cycleStartTime = Date.now();
+            startNewGame();
+        }
+        
         // If this is the first player, we need to restart the game cycle
         if (activePlayers.size === 1) {
             console.log("First player joined - starting game cycle");
@@ -480,76 +488,9 @@ io.on("connection", (socket) => {
                 activePlayers: 1
             });
         } else {
-            // Send current game state to the new player with exact duration
+            // Send current game state to the new player
             console.log("Additional player joined - sending current game state");
-            const now = Date.now();
-            const timeInCycle = (now - cycleStartTime) % cycleDuration;
-            
-            if (timeInCycle < gameplayDuration) {
-                // In gameplay phase
-                const exactDuration = Math.ceil((gameplayDuration - timeInCycle) / 1000);
-                socket.emit("levelInfo", {
-                    levelCondition: "Gameplay",
-                    difficulty: gameData.difficulty,
-                    backgroundImageUrl: gameData.backgroundImageUrl,
-                    targetImageUrl: gameData.targetImageUrl,
-                    targetCoords: {
-                        top_left: {
-                            x: gameData.flagPosition.x / 800,
-                            y: gameData.flagPosition.y / 600
-                        },
-                        bot_right: {
-                            x: (gameData.flagPosition.x + gameData.flagSize.width) / 800,
-                            y: (gameData.flagPosition.y + gameData.flagSize.height) / 600
-                        }
-                    },
-                    duration: exactDuration,
-                    opacity: gameData.opacity,
-                    score: gameData.score,
-                    activePlayers: activePlayers.size
-                });
-            } else {
-                // In summary phase
-                const exactDuration = Math.ceil((cycleDuration - timeInCycle) / 1000);
-                socket.emit("levelInfo", {
-                    levelCondition: "Summary",
-                    difficulty: gameData.difficulty,
-                    backgroundImageUrl: gameData.backgroundImageUrl,
-                    targetImageUrl: gameData.targetImageUrl,
-                    targetCoords: {
-                        top_left: {
-                            x: gameData.flagPosition.x / 800,
-                            y: gameData.flagPosition.y / 600
-                        },
-                        bot_right: {
-                            x: (gameData.flagPosition.x + gameData.flagSize.width) / 800,
-                            y: (gameData.flagPosition.y + gameData.flagSize.height) / 600
-                        }
-                    },
-                    duration: exactDuration,
-                    opacity: gameData.opacity,
-                    score: gameData.score,
-                    activePlayers: activePlayers.size,
-                    lastGameData: {
-                        difficulty: gameData.difficulty,
-                        backgroundImageUrl: gameData.backgroundImageUrl,
-                        targetImageUrl: gameData.targetImageUrl,
-                        opacity: gameData.opacity,
-                        clickedBy: gameData.clickedBy || null,
-                        score: gameData.score,
-                        targetCoords: {
-                            top_left: {
-                                x: gameData.flagPosition.x / 800,
-                                y: gameData.flagPosition.y / 600
-                            },
-                            bot_right: {
-                                x: (gameData.flagPosition.x + gameData.flagSize.width) / 800,
-                                y: (gameData.flagPosition.y + gameData.flagSize.height) / 600
-                            }
-                        }
-                    }
-                });
-            }
+            emitLevelInfo();
         }
     });
 
@@ -610,6 +551,13 @@ const emitLevelInfo = () => {
     
     // Calculate remaining time in summary phase
     const remainingSummaryTime = Math.floor((cycleDuration - timeInCycle) / 1000);
+
+    // Start new game if:
+    // 1. We're at the start of a cycle (timeInCycle < 1000)
+    // 2. OR we've moved from summary to gameplay phase
+    const isNewCycle = timeInCycle < 1000;
+    const movedToGameplay = timeInCycle < lastCycleTime;
+    const shouldStartNewGame = isNewCycle || movedToGameplay;
 
     // Determine phase and duration
     if (timeInCycle < gameplayDuration && remainingGameplayTime > 0) {
