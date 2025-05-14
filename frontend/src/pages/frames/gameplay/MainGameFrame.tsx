@@ -54,6 +54,7 @@ export default function MainGameFrame() {
           </Text>
         </Group>
         <ImageWithOverlay
+          key={`${level.backgroundImageUrl}-${level.targetImageUrl}`}
           backgroundSrc={level.backgroundImageUrl}
           targetSrc={level.targetImageUrl}
           pos={level.targetCoords}

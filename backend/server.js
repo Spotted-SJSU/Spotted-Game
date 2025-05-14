@@ -4,8 +4,6 @@ const socketIo = require("socket.io");
 const http = require("http");
 const mysql = require("mysql2");
 const bcrypt = require("bcrypt");
-const fs = require('fs');
-const path = require('path');
 
 const app = express();
 const server = http.createServer(app);
@@ -16,9 +14,39 @@ const io = socketIo(server, {
 app.use(cors());
 app.use(express.json());
 
-// Serve static files from the Game_Backgrounds_Scaled directory
-app.use('/Game_Backgrounds_Scaled', express.static(path.join(__dirname, 'Game_Backgrounds_Scaled')));
-
+// Image URLs mapped by type
+const IMAGES = {
+    backgrounds: [
+        'https://i.imgur.com/3nPGCxe.png',
+        'https://i.imgur.com/os48okp.png',
+        'https://i.imgur.com/3LKzzlY.png',
+        'https://i.imgur.com/VJj91MU.png',
+        'https://i.imgur.com/91wIvsN.png',
+        'https://i.imgur.com/ofIcGXH.png',
+        'https://i.imgur.com/LBWmpp1.png',
+        'https://i.imgur.com/dbtxzJH.png',
+        'https://i.imgur.com/jyOA5Br.png',
+        'https://i.imgur.com/RJb9qOe.png',
+        'https://i.imgur.com/thJ5o0P.png',
+        'https://i.imgur.com/7ldquWL.png',
+        'https://i.imgur.com/hNMKGAk.png',
+        'https://i.imgur.com/zNgN8Lg.png',
+        'https://i.imgur.com/eBrXky2.png',
+        'https://i.imgur.com/pKl0koc.png'
+    ],
+    flags: [
+        'https://i.imgur.com/vQVXe6G.png',
+        'https://i.imgur.com/L6pOmMU.png',
+        'https://i.imgur.com/bwz3AXh.png',
+        'https://i.imgur.com/lOxVVHd.png',
+        'https://i.imgur.com/5toV7Af.png',
+        'https://i.imgur.com/xYUpM8V.png',
+        'https://i.imgur.com/kuD2kV5.png',
+        'https://i.imgur.com/CtbXXi3.png',
+        'https://i.imgur.com/7DGaKkX.png',
+        'https://i.imgur.com/WpGlGEX.png'
+    ]
+};
 
 // --- MySQL Setup ---
 const db = mysql.createPool({
@@ -30,14 +58,6 @@ const db = mysql.createPool({
     keepAliveInitialDelay: 10000,
     enableKeepAlive: true,
 });
-
-// db.connect((err) => {
-//     if (err) {
-//         console.error(" DB connection error:", err);
-//         process.exit(1);
-//     }
-//     console.log("Connected to MySQL");
-// });
 
 // --- Game State ---
 let gameData = {
@@ -52,7 +72,6 @@ let gameData = {
 };
 let activePlayers = new Map();
 
-
 const generateFlagPosition = () => {
     const bgWidth = 800, bgHeight = 600;
     return {
@@ -65,23 +84,24 @@ const calculateDistance = (p1, p2) => {
     return Math.sqrt((p1.x - p2.x) ** 2 + (p1.y - p2.y) ** 2);
 };
 
+// Helper function to get random images
+const getRandomCountryImages = () => {
+    const selectedBackground = IMAGES.backgrounds[Math.floor(Math.random() * IMAGES.backgrounds.length)];
+    const selectedFlag = IMAGES.flags[Math.floor(Math.random() * IMAGES.flags.length)];
+    
+    console.log(`Selected background: ${selectedBackground}`);
+    console.log(`Selected flag: ${selectedFlag}`);
+    
+    return {
+        background: selectedBackground,
+        flag: selectedFlag
+    };
+};
+
 // --- Game Functions ---
 const startNewGame = () => {
-    // Updated path to use Game_Backgrounds_Scaled folder
-    const backgroundFolder = path.join(__dirname, 'Game_Backgrounds_Scaled');
-    const files = fs.readdirSync(backgroundFolder);
-
-
-    const isImage = file => /\.(jpg|jpeg|png)$/i.test(file);
-    const isFlag = file => /_flag\.(jpg|jpeg|png)$/i.test(file);
-    const isBackground = file => !isFlag(file) && isImage(file);
-
-    const backgrounds = files.filter(isBackground);
-    const flags = files.filter(isFlag);
-
-    const randomBackground = backgrounds[Math.floor(Math.random() * backgrounds.length)];
-    const randomFlag = flags[Math.floor(Math.random() * flags.length)];
-
+    console.log("Starting new game...");
+    const randomImages = getRandomCountryImages();
     const difficulties = ['Easy', 'Medium', 'Hard'];
     const difficulty = difficulties[Math.floor(Math.random() * difficulties.length)];
 
@@ -100,10 +120,13 @@ const startNewGame = () => {
     gameData.startTime = Date.now();
     gameData.gameOver = false;
     gameData.score = 0;
-    // Updated URLs to use Game_Backgrounds_Scaled folder
-    gameData.backgroundImageUrl = `/Game_Backgrounds_Scaled/${randomBackground}`;
-    gameData.targetImageUrl = `/Game_Backgrounds_Scaled/${randomFlag}`;
+    gameData.backgroundImageUrl = randomImages.background;
+    gameData.targetImageUrl = randomImages.flag;
     gameData.difficulty = difficulty;
+    
+    console.log(`New game started with difficulty: ${difficulty}`);
+    console.log(`Background: ${gameData.backgroundImageUrl}`);
+    console.log(`Flag: ${gameData.targetImageUrl}`);
 
     return {
         levelCondition: "Gameplay",
@@ -122,7 +145,6 @@ const startNewGame = () => {
         }
     };
 };
-
 
 // Keep the /start endpoint for backward compatibility or testing
 app.get("/start", (req, res) => {
@@ -165,9 +187,6 @@ app.get("/start", (req, res) => {
         }
     });
 });
-
-
-
 
 app.post("/click", (req, res) => {
     const { userId, x, y } = req.body;
@@ -266,8 +285,6 @@ app.post("/click", (req, res) => {
     });
 });
 
-
-
 app.get("/leaderboard", (req, res) => {
     // Get top 5 players by score
     db.query(
@@ -290,8 +307,6 @@ app.get("/leaderboard", (req, res) => {
         }
     );
 });
-
-
 
 // --- Auth Routes ---
 app.post("/register", async (req, res) => {
@@ -342,7 +357,6 @@ app.post("/register", async (req, res) => {
         });
     });
 });
-
 
 app.post("/login", (req, res) => {
     const { username, password } = req.body;
@@ -419,21 +433,6 @@ app.post("/login", (req, res) => {
     });
 });
 
-
-/*
-app.get("/active-players", (req, res) => {
-    const players = Array.from(activePlayers.values()); // Return all active players
-    res.json({
-        success: true,
-        error: null,
-        data: players
-    });
-});
-*/
-
-
-
-
 // --- WebSocket ---
 io.on("connection", (socket) => {
     console.log("New player connected!");
@@ -450,24 +449,33 @@ io.on("connection", (socket) => {
 
     socket.on("registerUserId", (data) => {
         userId = data.userId;
+        console.log(`Player ${userId} registered`);
         activePlayers.set(userId, { userId }); // Add to active players
-        // If this is the first player, we might need to restart the game cycle
-        if (activePlayers.size === 1 && !gameActive) {
+        
+        // If this is the first player, we need to restart the game cycle
+        if (activePlayers.size === 1) {
             console.log("First player joined - starting game cycle");
             gameActive = true;
             cycleStartTime = Date.now();
-            // Immediately emit game state to provide feedback MAKE CHANGE FIX HERE
+            // Force a new game start
+            const gameInfo = startNewGame();
+            socket.emit("levelInfo", {
+                ...gameInfo,
+                duration: 40,
+                activePlayers: 1
+            });
+        } else {
+            // Send current game state to the new player
+            console.log("Additional player joined - sending current game state");
             emitLevelInfo();
         }
     });
 
-
     socket.on("disconnect", () => {
-        console.log("Player disconnected.");
+        console.log(`Player ${userId} disconnected`);
         if (userId) activePlayers.delete(userId);
     });
 });
-
 
 //Active Players Emitting Logic
 const broadcastActivePlayers = () => {
@@ -476,7 +484,6 @@ const broadcastActivePlayers = () => {
     };
 
 setInterval(broadcastActivePlayers, 1000); // emit every second
-
 
 // Level Condition, Game Start, and Duration Emitting logic
 const cycleDuration = 50 * 1000;
@@ -488,11 +495,9 @@ let gameActive = false;
 let cycleStartTime = null;
 let pausedTimeInCycle = 0;
 
-
-
-
 const emitLevelInfo = () => {
     const playerCount = activePlayers.size;
+    console.log(`\nEmitting level info. Active players: ${playerCount}`);
 
     if (playerCount === 0) {
         if (gameActive) {
@@ -516,6 +521,7 @@ const emitLevelInfo = () => {
 
     const now = Date.now();
     const timeInCycle = (now - cycleStartTime) % cycleDuration;
+    console.log(`Time in cycle: ${timeInCycle}ms, Gameplay duration: ${gameplayDuration}ms`);
 
     let levelCondition;
     let duration;
@@ -527,8 +533,9 @@ const emitLevelInfo = () => {
         levelCondition = "Gameplay";
         duration = gameplayDuration - timeInCycle;
 
-        // Start a new game at the beginning
+        // Start a new game at the beginning of gameplay phase
         if (timeInCycle < 1000) {
+            console.log("Starting new game in gameplay phase");
             response = {
                 ...response,
                 levelCondition,
@@ -536,6 +543,7 @@ const emitLevelInfo = () => {
                 ...startNewGame()
             };
         } else {
+            console.log("Continuing existing game");
             response = {
                 ...response,
                 levelCondition,
@@ -558,6 +566,7 @@ const emitLevelInfo = () => {
     } else {
         levelCondition = "Summary";
         duration = cycleDuration - timeInCycle;
+        console.log("In summary phase");
 
         response = {
             ...response,
@@ -573,6 +582,7 @@ const emitLevelInfo = () => {
         };
     }
 
+    console.log(`Emitting levelInfo with condition: ${response.levelCondition}, duration: ${response.duration}s`);
     io.emit("levelInfo", response);
 };
 
