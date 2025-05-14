@@ -480,9 +480,76 @@ io.on("connection", (socket) => {
                 activePlayers: 1
             });
         } else {
-            // Send current game state to the new player
+            // Send current game state to the new player with exact duration
             console.log("Additional player joined - sending current game state");
-            emitLevelInfo();
+            const now = Date.now();
+            const timeInCycle = (now - cycleStartTime) % cycleDuration;
+            
+            if (timeInCycle < gameplayDuration) {
+                // In gameplay phase
+                const exactDuration = Math.ceil((gameplayDuration - timeInCycle) / 1000);
+                socket.emit("levelInfo", {
+                    levelCondition: "Gameplay",
+                    difficulty: gameData.difficulty,
+                    backgroundImageUrl: gameData.backgroundImageUrl,
+                    targetImageUrl: gameData.targetImageUrl,
+                    targetCoords: {
+                        top_left: {
+                            x: gameData.flagPosition.x / 800,
+                            y: gameData.flagPosition.y / 600
+                        },
+                        bot_right: {
+                            x: (gameData.flagPosition.x + gameData.flagSize.width) / 800,
+                            y: (gameData.flagPosition.y + gameData.flagSize.height) / 600
+                        }
+                    },
+                    duration: exactDuration,
+                    opacity: gameData.opacity,
+                    score: gameData.score,
+                    activePlayers: activePlayers.size
+                });
+            } else {
+                // In summary phase
+                const exactDuration = Math.ceil((cycleDuration - timeInCycle) / 1000);
+                socket.emit("levelInfo", {
+                    levelCondition: "Summary",
+                    difficulty: gameData.difficulty,
+                    backgroundImageUrl: gameData.backgroundImageUrl,
+                    targetImageUrl: gameData.targetImageUrl,
+                    targetCoords: {
+                        top_left: {
+                            x: gameData.flagPosition.x / 800,
+                            y: gameData.flagPosition.y / 600
+                        },
+                        bot_right: {
+                            x: (gameData.flagPosition.x + gameData.flagSize.width) / 800,
+                            y: (gameData.flagPosition.y + gameData.flagSize.height) / 600
+                        }
+                    },
+                    duration: exactDuration,
+                    opacity: gameData.opacity,
+                    score: gameData.score,
+                    activePlayers: activePlayers.size,
+                    lastGameData: {
+                        difficulty: gameData.difficulty,
+                        backgroundImageUrl: gameData.backgroundImageUrl,
+                        targetImageUrl: gameData.targetImageUrl,
+                        opacity: gameData.opacity,
+                        clickedBy: gameData.clickedBy || null,
+                        score: gameData.score,
+                        targetCoords: {
+                            top_left: {
+                                x: gameData.flagPosition.x / 800,
+                                y: gameData.flagPosition.y / 600
+                            },
+                            bot_right: {
+                                x: (gameData.flagPosition.x + gameData.flagSize.width) / 800,
+                                y: (gameData.flagPosition.y + gameData.flagSize.height) / 600
+                            }
+                        }
+                    }
+                });
+            }
         }
     });
 
