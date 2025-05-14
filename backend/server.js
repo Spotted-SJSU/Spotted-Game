@@ -484,7 +484,7 @@ io.on("connection", (socket) => {
             const gameInfo = startNewGame();
             socket.emit("levelInfo", {
                 ...gameInfo,
-                duration: 40,
+                duration: 20,
                 activePlayers: 1
             });
         } else {
@@ -509,8 +509,8 @@ const broadcastActivePlayers = () => {
 setInterval(broadcastActivePlayers, 1000); // emit every second
 
 // Level Condition, Game Start, and Duration Emitting logic
-const cycleDuration = 50 * 1000;
-const gameplayDuration = 40 * 1000;
+const cycleDuration = 30 * 1000;
+const gameplayDuration = 20 * 1000;
 const summaryDuration = 10 * 1000;
 
 // Variables to track game state
