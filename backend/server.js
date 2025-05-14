@@ -68,7 +68,8 @@ let gameData = {
     score: 0,
     backgroundImageUrl: null,
     targetImageUrl: null,
-    difficulty: null
+    difficulty: null,
+    clickedBy: null
 };
 let activePlayers = new Map();
 
@@ -111,18 +112,20 @@ const startNewGame = () => {
     if (difficulty === 'Medium') flagSizeMultiplier = 0.9;
     else if (difficulty === 'Hard') flagSizeMultiplier = 0.8;
 
-    gameData.flagSize = {
-        width: baseFlagSize.width * flagSizeMultiplier,
-        height: baseFlagSize.height * flagSizeMultiplier
+    gameData = {
+        flagSize: {
+            width: baseFlagSize.width * flagSizeMultiplier,
+            height: baseFlagSize.height * flagSizeMultiplier
+        },
+        flagPosition: generateFlagPosition(),
+        startTime: Date.now(),
+        gameOver: false,
+        score: 0,
+        backgroundImageUrl: randomImages.background,
+        targetImageUrl: randomImages.flag,
+        difficulty: difficulty,
+        clickedBy: null
     };
-
-    gameData.flagPosition = generateFlagPosition();
-    gameData.startTime = Date.now();
-    gameData.gameOver = false;
-    gameData.score = 0;
-    gameData.backgroundImageUrl = randomImages.background;
-    gameData.targetImageUrl = randomImages.flag;
-    gameData.difficulty = difficulty;
     
     console.log(`New game started with difficulty: ${difficulty}`);
     console.log(`Background: ${gameData.backgroundImageUrl}`);
@@ -494,6 +497,7 @@ const summaryDuration = 10 * 1000;
 let gameActive = false;
 let cycleStartTime = null;
 let pausedTimeInCycle = 0;
+let lastCycleTime = 0;
 
 const emitLevelInfo = () => {
     const playerCount = activePlayers.size;
@@ -529,25 +533,32 @@ const emitLevelInfo = () => {
         activePlayers: playerCount
     };
 
+    // Start new game if:
+    // 1. We're at the start of a cycle (timeInCycle < 1000)
+    // 2. OR we've moved from summary to gameplay phase
+    const isNewCycle = timeInCycle < 1000;
+    const movedToGameplay = timeInCycle < lastCycleTime;
+    const shouldStartNewGame = isNewCycle || movedToGameplay;
+
     if (timeInCycle < gameplayDuration) {
         levelCondition = "Gameplay";
-        duration = gameplayDuration - timeInCycle;
+        duration = Math.floor((gameplayDuration - timeInCycle) / 10000) * 10;
 
-        // Start a new game at the beginning of gameplay phase
-        if (timeInCycle < 1000) {
+        if (shouldStartNewGame) {
             console.log("Starting new game in gameplay phase");
+            const newGame = startNewGame();
             response = {
                 ...response,
                 levelCondition,
-                duration: Math.ceil(duration / 1000),
-                ...startNewGame()
+                duration,
+                ...newGame
             };
         } else {
             console.log("Continuing existing game");
             response = {
                 ...response,
                 levelCondition,
-                duration: Math.ceil(duration / 1000),
+                duration,
                 difficulty: gameData.difficulty,
                 backgroundImageUrl: gameData.backgroundImageUrl,
                 targetImageUrl: gameData.targetImageUrl,
@@ -565,13 +576,13 @@ const emitLevelInfo = () => {
         }
     } else {
         levelCondition = "Summary";
-        duration = cycleDuration - timeInCycle;
+        duration = Math.floor((cycleDuration - timeInCycle) / 10000) * 10;
         console.log("In summary phase");
 
         response = {
             ...response,
             levelCondition,
-            duration: Math.ceil(duration / 1000),
+            duration,
             lastGameData: {
                 difficulty: gameData.difficulty,
                 backgroundImageUrl: gameData.backgroundImageUrl,
@@ -582,6 +593,7 @@ const emitLevelInfo = () => {
         };
     }
 
+    lastCycleTime = timeInCycle;
     console.log(`Emitting levelInfo with condition: ${response.levelCondition}, duration: ${response.duration}s`);
     io.emit("levelInfo", response);
 };
