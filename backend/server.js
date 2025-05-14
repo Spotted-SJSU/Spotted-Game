@@ -147,6 +147,7 @@ const startNewGame = () => {
         difficulty,
         backgroundImageUrl: gameData.backgroundImageUrl,
         targetImageUrl: gameData.targetImageUrl,
+        opacity: gameData.opacity,
         targetCoords: {
             top_left: {
                 x: gameData.flagPosition.x / 800,
