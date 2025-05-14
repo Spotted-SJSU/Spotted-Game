@@ -35,7 +35,13 @@ export default function ImageWithOverlay(props: ImageWithOverlayProps) {
   };
 
   return (
-    <div style={{ position: "relative", width: "fit-content", height: "auto" }}>
+    <div
+      style={{
+        position: "relative",
+        width: "fit-content",
+        height: "auto",
+      }}
+    >
       <Image
         ref={bgImageRef}
         draggable={false}

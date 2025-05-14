@@ -36,7 +36,7 @@ export default function MainGameFrame() {
   }, [user]);
 
   useEffect(() => {
-    setOpened(isGameplay());
+    setOpened(!isGameplay());
   }, [level]);
 
   if (!user) {
@@ -65,14 +65,12 @@ export default function MainGameFrame() {
         width={320}
         shadow="xs"
         withOverlay
-        withArrow
-        arrowPosition="side"
         closeOnClickOutside={false}
         closeOnEscape={false}
         overlayProps={{
           zIndex: 10000,
           blur: "2px",
-          backgroundOpacity: 0.3,
+          backgroundOpacity: 0.1,
         }}
         zIndex={10001}
       >
@@ -84,7 +82,9 @@ export default function MainGameFrame() {
             pos={level.targetCoords}
           />
         </Popover.Target>
-        <Popover.Dropdown>asd123</Popover.Dropdown>
+        <Popover.Dropdown>
+          <>asd123</>
+        </Popover.Dropdown>
       </Popover>
     </>
   );
