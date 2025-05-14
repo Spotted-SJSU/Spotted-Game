@@ -65,12 +65,12 @@ let gameData = {
     flagSize: { width: 60, height: 40 },
     startTime: null,
     gameOver: false,
-    score: 0,
     backgroundImageUrl: null,
     targetImageUrl: null,
     difficulty: null,
     opacity: 1,
-    clickedBy: null
+    playerScores: new Map(), // Track scores for each player in current round
+    roundId: null // Unique identifier for each round
 };
 let activePlayers = new Map();
 
@@ -124,18 +124,18 @@ const startNewGame = () => {
 
     gameData = {
         flagSize: {
-        width: baseFlagSize.width * flagSizeMultiplier,
-        height: baseFlagSize.height * flagSizeMultiplier
+            width: baseFlagSize.width * flagSizeMultiplier,
+            height: baseFlagSize.height * flagSizeMultiplier
         },
         flagPosition: generateFlagPosition(),
         startTime: Date.now(),
         gameOver: false,
-        score: 0,
         backgroundImageUrl: randomImages.background,
         targetImageUrl: randomImages.flag,
         difficulty: difficulty,
         opacity: opacity,
-        clickedBy: null
+        playerScores: new Map(),
+        roundId: Date.now().toString() // Unique identifier based on timestamp
     };
     
     console.log(`New game started with difficulty: ${difficulty}`);
@@ -214,12 +214,13 @@ app.post("/click", (req, res) => {
         });
     }
 
-    if (gameData.gameOver) {
+    // Check if player has already clicked in this round
+    if (gameData.playerScores.has(userId)) {
         return res.json({
             success: false,
-            error: "Game already over!",
+            error: "You've already submitted a score for this round",
             data: {
-                score: gameData.score
+                score: gameData.playerScores.get(userId)
             }
         });
     }
@@ -231,7 +232,6 @@ app.post("/click", (req, res) => {
     const clickedX = x * bgWidth;
     const clickedY = y * bgHeight;
 
-    gameData.gameOver = true;
     const timeTaken = (Date.now() - gameData.startTime) / 1000;
 
     let points;
@@ -245,8 +245,12 @@ app.post("/click", (req, res) => {
         points = Math.max(0, 100 - (distance / 10)) + (30 - timeTaken);
     }
 
-    gameData.score = Math.max(0, Math.round(points));
-    gameData.clickedBy = userId;  // Track which user clicked
+    const playerScore = Math.max(0, Math.round(points));
+    
+    // Store the score for this player in the current round
+    gameData.playerScores.set(userId, playerScore);
+    
+    console.log(`Player ${userId} scored ${playerScore} points`);
 
     // Check if the user exists in the database and update their score
     db.query("SELECT * FROM Users WHERE UserID = ?", [userId], (err, results) => {
@@ -265,16 +269,15 @@ app.post("/click", (req, res) => {
                 success: true,
                 error: null,
                 data: {
-                    score: gameData.score,
-                    clickedBy: userId,
+                    score: playerScore,
                     message: "Score not saved - user not found"
                 }
             });
         }
 
         // User exists, update their score
-      db.query("UPDATE Users SET Score = Score + ? WHERE UserID = ?",
-        [gameData.score, userId],
+        db.query("UPDATE Users SET Score = Score + ? WHERE UserID = ?",
+            [playerScore, userId],
             (updateErr) => {
                 if (updateErr) {
                     console.error("Error updating score:", updateErr);
@@ -290,8 +293,7 @@ app.post("/click", (req, res) => {
                     success: true,
                     error: null,
                     data: {
-                        score: gameData.score,
-                        clickedBy: userId,
+                        score: playerScore,
                         message: "Score updated successfully"
                     }
                 });
@@ -603,49 +605,11 @@ const emitLevelInfo = () => {
         duration = 10;
         console.log("Transitioning to summary phase with 10s duration");
 
-        response = {
-            ...response,
-            levelCondition,
-            difficulty: gameData.difficulty,
-            backgroundImageUrl: gameData.backgroundImageUrl,
-            targetImageUrl: gameData.targetImageUrl,
-            targetCoords: {
-                top_left: {
-                    x: gameData.flagPosition.x / 800,
-                    y: gameData.flagPosition.y / 600
-                },
-                bot_right: {
-                    x: (gameData.flagPosition.x + gameData.flagSize.width) / 800,
-                    y: (gameData.flagPosition.y + gameData.flagSize.height) / 600
-                }
-            },
-            duration,
-            opacity: gameData.opacity,
-            score: gameData.score,
-            lastGameData: {
-                difficulty: gameData.difficulty,
-                backgroundImageUrl: gameData.backgroundImageUrl,
-                targetImageUrl: gameData.targetImageUrl,
-                opacity: gameData.opacity,
-                clickedBy: gameData.clickedBy || null,
-                score: gameData.score,
-                targetCoords: {
-                    top_left: {
-                        x: gameData.flagPosition.x / 800,
-                        y: gameData.flagPosition.y / 600
-                    },
-                    bot_right: {
-                        x: (gameData.flagPosition.x + gameData.flagSize.width) / 800,
-                        y: (gameData.flagPosition.y + gameData.flagSize.height) / 600
-                    }
-                }
-            }
-        };
-    } else if (remainingSummaryTime > 0) {
-        // Normal summary phase with positive duration
-        levelCondition = "Summary";
-        duration = remainingSummaryTime;
-        console.log("In summary phase");
+        // Convert playerScores Map to array for the response
+        const scoresArray = Array.from(gameData.playerScores.entries()).map(([userId, score]) => ({
+            userId,
+            score
+        }));
 
         response = {
             ...response,
@@ -665,14 +629,64 @@ const emitLevelInfo = () => {
             },
             duration,
             opacity: gameData.opacity,
-            score: gameData.score,
+            score: undefined,
             lastGameData: {
                 difficulty: gameData.difficulty,
                 backgroundImageUrl: gameData.backgroundImageUrl,
                 targetImageUrl: gameData.targetImageUrl,
                 opacity: gameData.opacity,
-                clickedBy: gameData.clickedBy || null,
-                score: gameData.score,
+                roundId: gameData.roundId,
+                playerScores: scoresArray,
+                targetCoords: {
+                    top_left: {
+                        x: gameData.flagPosition.x / 800,
+                        y: gameData.flagPosition.y / 600
+                    },
+                    bot_right: {
+                        x: (gameData.flagPosition.x + gameData.flagSize.width) / 800,
+                        y: (gameData.flagPosition.y + gameData.flagSize.height) / 600
+                    }
+                }
+            }
+        };
+    } else if (remainingSummaryTime > 0) {
+        // Normal summary phase with positive duration
+        levelCondition = "Summary";
+        duration = remainingSummaryTime;
+        console.log("In summary phase");
+
+        // Convert playerScores Map to array for the response
+        const scoresArray = Array.from(gameData.playerScores.entries()).map(([userId, score]) => ({
+            userId,
+            score
+        }));
+
+        response = {
+            ...response,
+            levelCondition,
+            difficulty: gameData.difficulty,
+            backgroundImageUrl: gameData.backgroundImageUrl,
+            targetImageUrl: gameData.targetImageUrl,
+            targetCoords: {
+                top_left: {
+                    x: gameData.flagPosition.x / 800,
+                    y: gameData.flagPosition.y / 600
+                },
+                bot_right: {
+                    x: (gameData.flagPosition.x + gameData.flagSize.width) / 800,
+                    y: (gameData.flagPosition.y + gameData.flagSize.height) / 600
+                }
+            },
+            duration,
+            opacity: gameData.opacity,
+            score: undefined,
+            lastGameData: {
+                difficulty: gameData.difficulty,
+                backgroundImageUrl: gameData.backgroundImageUrl,
+                targetImageUrl: gameData.targetImageUrl,
+                opacity: gameData.opacity,
+                roundId: gameData.roundId,
+                playerScores: scoresArray,
                 targetCoords: {
                     top_left: {
                         x: gameData.flagPosition.x / 800,
