@@ -38,17 +38,24 @@ export default function ImageWithOverlay(props: ImageWithOverlayProps) {
     <div style={{ position: "relative", width: "fit-content", height: "auto" }}>
       <Image
         ref={bgImageRef}
+        draggable={false}
         src={backgroundSrc}
         onLoad={drawTargetImage}
         w="100%"
+        style={{
+          userSelect: "none",
+        }}
       />
       {!isLoading && (
         <img
           src={targetSrc}
+          draggable={false}
           style={{
+            zIndex: 100,
+            userSelect: "none",
             position: "absolute",
             ...getBounds(),
-            opacity: 0.1, // TODO: Get opacity from backend
+            opacity: 0.5,
           }}
           width="80px"
           height="auto"
