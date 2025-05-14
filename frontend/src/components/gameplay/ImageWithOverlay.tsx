@@ -33,7 +33,7 @@ export default function ImageWithOverlay(props: ImageWithOverlayProps) {
     // Allow a small delay for layout calculations
     setTimeout(() => {
       setIsLoading(false);
-    }, 100);
+    }, 1500);
   };
 
   const getBounds = () => {
@@ -42,6 +42,8 @@ export default function ImageWithOverlay(props: ImageWithOverlayProps) {
     const bgImageBounds = bgImageRef.current?.getClientRects().item(0)!;
     const left = pos.top_left.x * bgImageBounds.width;
     const top = pos.top_left.y * bgImageBounds.height;
+    // const right = pos.bot_right.x * asd.width;
+    // const bottom = pos.bot_right.y * asd.height;
     return {
       left: left,
       top: top,
