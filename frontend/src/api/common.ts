@@ -32,4 +32,9 @@ const showError = (errorMessage) => {
   });
 };
 
-export const socket = io(`ws://${BASE_PATH}`);
+export const socket = io(BASE_URL, {
+  transports: ['websocket', 'polling'],
+  reconnection: true,
+  reconnectionAttempts: 5,
+  reconnectionDelay: 1000
+});

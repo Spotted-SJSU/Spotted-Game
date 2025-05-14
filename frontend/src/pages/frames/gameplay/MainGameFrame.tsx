@@ -25,10 +25,16 @@ export default function MainGameFrame() {
   };
 
   useEffect(() => {
+    console.log("Setting up WebSocket connection");
     setLoading(true);
     connect(user);
-    const timeout = subscribeToGameplayEvents(onMessage);
-    // return () => timeout;
+    const cleanup = subscribeToGameplayEvents(onMessage);
+    
+    // Properly cleanup WebSocket subscription
+    return () => {
+      console.log("Cleaning up WebSocket connection");
+      cleanup();
+    };
   }, [user]);
 
   // useEffect(() => {
@@ -44,6 +50,12 @@ export default function MainGameFrame() {
   }
 
   if (level.levelCondition === "Gameplay") {
+    console.log("Rendering gameplay with:", {
+      background: level.backgroundImageUrl,
+      flag: level.targetImageUrl,
+      coords: level.targetCoords
+    });
+    
     return (
       <>
         <Group justify="space-between" w="max-content">
@@ -54,6 +66,7 @@ export default function MainGameFrame() {
           </Text>
         </Group>
         <ImageWithOverlay
+          key={`${level.backgroundImageUrl}-${level.targetImageUrl}`} // Force re-render on new images
           backgroundSrc={level.backgroundImageUrl}
           targetSrc={level.targetImageUrl}
           pos={level.targetCoords}
@@ -64,6 +77,7 @@ export default function MainGameFrame() {
     return (
       <>
         <Text>Waiting for the next round!</Text>
+        <Text size="sm" color="dimmed">Last state: {JSON.stringify(level, null, 2)}</Text>
       </>
     );
   }
