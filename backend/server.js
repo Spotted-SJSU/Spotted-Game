@@ -570,11 +570,9 @@ const emitLevelInfo = () => {
             response = {
                 ...response,
                 levelCondition,
-                duration,
                 difficulty: gameData.difficulty,
                 backgroundImageUrl: gameData.backgroundImageUrl,
                 targetImageUrl: gameData.targetImageUrl,
-                opacity: gameData.opacity,
                 targetCoords: {
                     top_left: {
                         x: gameData.flagPosition.x / 800,
@@ -584,7 +582,10 @@ const emitLevelInfo = () => {
                         x: (gameData.flagPosition.x + gameData.flagSize.width) / 800,
                         y: (gameData.flagPosition.y + gameData.flagSize.height) / 600
                     }
-                }
+                },
+                duration,
+                opacity: gameData.opacity,
+                score: gameData.score
             };
         }
     } else {
@@ -595,7 +596,22 @@ const emitLevelInfo = () => {
         response = {
             ...response,
             levelCondition,
+            difficulty: gameData.difficulty,
+            backgroundImageUrl: gameData.backgroundImageUrl,
+            targetImageUrl: gameData.targetImageUrl,
+            targetCoords: {
+                top_left: {
+                    x: gameData.flagPosition.x / 800,
+                    y: gameData.flagPosition.y / 600
+                },
+                bot_right: {
+                    x: (gameData.flagPosition.x + gameData.flagSize.width) / 800,
+                    y: (gameData.flagPosition.y + gameData.flagSize.height) / 600
+                }
+            },
             duration,
+            opacity: gameData.opacity,
+            score: gameData.score,
             lastGameData: {
                 difficulty: gameData.difficulty,
                 backgroundImageUrl: gameData.backgroundImageUrl,
