@@ -69,7 +69,7 @@ export default function Gameplay() {
         <AppShell.Main>
           <MainGameFrame />
         </AppShell.Main>
-        <AppShell.Aside p="md" w={300}>
+        <AppShell.Aside p="md" w={500}>
           <AppShell.Section p="md">
             <ActivePlayersFrame />
           </AppShell.Section>
