@@ -23,16 +23,11 @@ RUN cd frontend && npm run build
 RUN mkdir -p /var/www/html
 RUN cp -r frontend/dist/* /var/www/html/
 
-# Create nginx config directories (Alpine Linux specific)
-RUN mkdir -p /etc/nginx/conf.d
-RUN mkdir -p /etc/nginx/http.d
-
-# Copy nginx config to both possible locations
-COPY nginx.conf /etc/nginx/conf.d/default.conf
-COPY nginx.conf /etc/nginx/http.d/default.conf
+# Use our nginx.conf as the main nginx config
+COPY nginx.conf /etc/nginx/nginx.conf
 
 # Create a startup script directly in the build
-RUN printf '#!/bin/sh\necho "Starting application..."\necho "Checking frontend files:"\nls -la /var/www/html\necho "Checking nginx config:"\nls -la /etc/nginx/conf.d\nls -la /etc/nginx/http.d\necho "Starting backend server..."\ncd /app/backend && node server.js & \necho "Starting nginx..."\nnginx -g "daemon off;"\n' > /app/start.sh
+RUN printf '#!/bin/sh\necho "Starting application..."\necho "Checking frontend files:"\nls -la /var/www/html\necho "Checking nginx config:"\ncat /etc/nginx/nginx.conf\necho "Starting backend server..."\ncd /app/backend && node server.js & \necho "Starting nginx..."\nnginx\n' > /app/start.sh
 RUN chmod +x /app/start.sh
 
 # Expose ports
