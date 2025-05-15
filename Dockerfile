@@ -38,6 +38,7 @@ RUN cp -r frontend/dist/* /var/www/html/
 
 # Debug: Verify copied content
 RUN ls -la /var/www/html/
+RUN cat /var/www/html/index.html | head -20
 
 # Use our nginx.conf as the main nginx config
 COPY nginx.conf /etc/nginx/nginx.conf
