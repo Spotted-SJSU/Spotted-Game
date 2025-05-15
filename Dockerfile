@@ -89,5 +89,10 @@ EOF
 EXPOSE 80
 EXPOSE 3000
 
+# Set the PORT environment variable for Render
+ENV PORT=3000
+ENV RENDER_EXTERNAL_PORT=3000
+ENV RENDER_EXTERNAL_URL=https://spotted-game.onrender.com
+
 # Command to run
 CMD ["supervisord", "-c", "/etc/supervisor/supervisord.conf"] 
