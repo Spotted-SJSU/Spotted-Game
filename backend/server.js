@@ -5,6 +5,7 @@ const http = require("http");
 const mysql = require("mysql2");
 const bcrypt = require("bcrypt");
 const path = require("path");
+require('dotenv').config();
 
 const app = express();
 const server = http.createServer(app);
@@ -61,11 +62,11 @@ const IMAGES = {
 
 // --- MySQL Setup ---
 const db = mysql.createPool({
-    host: "softwareproject.cxmu80uoi8qg.us-west-1.rds.amazonaws.com",
-    user: "Aniket",
-    password: "321tekinA",
-    database: "SpotIt",
-    port: 3306,
+    host: process.env.DB_HOST || "softwareproject.cxmu80uoi8qg.us-west-1.rds.amazonaws.com",
+    user: process.env.DB_USER || "Aniket",
+    password: process.env.DB_PASSWORD || "321tekinA",
+    database: process.env.DB_NAME || "SpotIt",
+    port: process.env.DB_PORT || 3306,
     keepAliveInitialDelay: 10000,
     enableKeepAlive: true,
 });
