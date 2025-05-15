@@ -76,6 +76,7 @@ COPY <<-EOF /etc/supervisor/conf.d/node.conf
 [program:node]
 command=node /app/backend/server.js
 directory=/app/backend
+environment=PORT=3000
 autostart=true
 autorestart=true
 stdout_logfile=/dev/stdout
@@ -86,7 +87,7 @@ EOF
 
 # Expose ports
 EXPOSE 80
-EXPOSE 5001
+EXPOSE 3000
 
 # Command to run
 CMD ["supervisord", "-c", "/etc/supervisor/supervisord.conf"] 
