@@ -6,6 +6,10 @@ A multiplayer flag-finding game where players compete to find hidden flags acros
 
 The game is live and playable at: [https://spotted-game.onrender.com](https://spotted-game.onrender.com)
 
+## Demo Video
+
+Check out our demo video to see the game in action: [Spotted Game Demo](https://youtu.be/oESQDwCYCag)
+
 ## Features
 
 - **User Authentication**: Register and login system to track individual player scores
