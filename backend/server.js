@@ -4,15 +4,26 @@ const socketIo = require("socket.io");
 const http = require("http");
 const mysql = require("mysql2");
 const bcrypt = require("bcrypt");
+const path = require("path");
 
 const app = express();
 const server = http.createServer(app);
 const io = socketIo(server, {
-    cors: { origin: "*" }
+    cors: { 
+        origin: "*",
+        methods: ["GET", "POST"]
+    }
 });
 
-app.use(cors());
+app.use(cors({
+    origin: "*",
+    methods: ["GET", "POST", "PUT", "DELETE"],
+    credentials: true
+}));
 app.use(express.json());
+
+// Serve static files from the frontend build
+app.use(express.static(path.join(__dirname, '../frontend/dist')));
 
 // Image URLs mapped by type
 const IMAGES = {
@@ -814,7 +825,7 @@ const levelInfoInterval = setInterval(emitLevelInfo, 10000);
 //Filler
 
 // --- Start Server ---
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 5001;
 server.listen(PORT, () => {
     console.log(`🚀 Server running on port ${PORT}`);
 
@@ -844,4 +855,14 @@ server.listen(PORT, () => {
             console.log("ChatMessages table ready");
         }
     });
+});
+
+// Serve the React app for any other routes
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, '../frontend/dist/index.html'));
+});
+
+// Health check endpoint
+app.get('/health', (req, res) => {
+  res.status(200).send('OK');
 });

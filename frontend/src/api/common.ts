@@ -2,11 +2,8 @@ import { notifications } from "@mantine/notifications";
 import { io } from "socket.io-client";
 import { ApiResponse } from "../types/api/ApiResponse";
 
-// export const BASE_URL = '/api';
-
-export const BASE_SCHEME = "http://";
-export const BASE_PATH = "localhost:5001";
-export const BASE_URL = BASE_SCHEME + BASE_PATH;
+// Use relative URLs in production, full URLs in development
+export const BASE_URL = '';
 
 export const safeFetch = async <T>(
   input: RequestInfo | URL,
@@ -34,7 +31,8 @@ const showError = (errorMessage) => {
   });
 };
 
-export const socket = io(BASE_URL, {
+// For Socket.IO, we'll use the current host 
+export const socket = io(window.location.origin, {
   transports: ['websocket', 'polling'],
   reconnection: true,
   reconnectionAttempts: 5,
