@@ -86,3 +86,27 @@ This directory contains user guides and documentation for setting up, running, a
 - MySQL database with tables for Users, ChatMessages
 - Authentication using bcrypt password hashing
 - Session management via client-side storage 
+
+## Deployment Guide
+
+### Deploying to Render.com
+
+1. Create a new Web Service on Render.com and connect your GitHub repository
+
+2. Configure the service:
+   - **Environment**: Docker
+   - **Build Command**: Leave default
+   - **Start Command**: Leave default
+
+3. Set up the following environment variables in the Render dashboard:
+   - `DB_HOST` - Your MySQL database host
+   - `DB_USER` - Your MySQL username
+   - `DB_PASSWORD` - Your MySQL password
+   - `DB_NAME` - Your database name
+   - `DB_PORT` - Your MySQL port (usually 3306)
+   - `PORT` - The port your app will run on (usually 5001)
+   - `NODE_ENV` - Set to "production"
+
+4. Click "Create Web Service" and wait for the build to complete
+
+5. Your application will be available at the provided Render URL 
