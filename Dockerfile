@@ -24,13 +24,13 @@ RUN mkdir -p /var/www/html
 RUN cp -r frontend/dist/* /var/www/html/
 COPY nginx.conf /etc/nginx/http.d/default.conf
 
-# Prepare startup script
-RUN echo '#!/bin/sh\ncd /app/backend && node server.js & nginx -g "daemon off;"' > /start.sh
-RUN chmod +x /start.sh
+# Create a startup script directly in the build
+RUN printf '#!/bin/sh\ncd /app/backend && node server.js & nginx -g "daemon off;"\n' > /app/start.sh
+RUN chmod +x /app/start.sh
 
 # Expose ports
 EXPOSE 80
 EXPOSE 5001
 
 # Command to run
-CMD ["/start.sh"] 
+CMD ["/app/start.sh"] 
