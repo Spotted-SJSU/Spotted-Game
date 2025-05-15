@@ -17,15 +17,6 @@ RUN cd frontend && npm install react-router-dom
 # Copy application code
 COPY . .
 
-# Create a healthcheck endpoint file
-RUN echo "// Health check endpoint" > /app/health-check.js
-RUN echo "app.get('/health', (req, res) => {" >> /app/health-check.js
-RUN echo "  res.status(200).send('OK');" >> /app/health-check.js
-RUN echo "});" >> /app/health-check.js
-
-# Append the health check to server.js
-RUN cat /app/health-check.js >> /app/backend/server.js
-
 # Build the frontend
 RUN cd frontend && npm run build
 

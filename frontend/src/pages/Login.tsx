@@ -5,6 +5,13 @@ import { Button, Divider, Flex, Text, TextInput, Title } from "@mantine/core";
 import { Form, useForm } from "@mantine/form";
 import { login, register } from "../api/auth-api";
 
+interface AuthResponse {
+  success: boolean;
+  data: {
+    userId: string;
+  };
+}
+
 export default function Login() {
   const { user, setUser, resetUser } = useAuthStore();
   const [loading, setLoading] = useState<boolean>(false);
@@ -44,7 +51,7 @@ export default function Login() {
       const response = await register({
         username,
         password,
-      });
+      }) as AuthResponse;
       if (!response.success) {
         setLoading(false);
         return;
@@ -60,7 +67,7 @@ export default function Login() {
       const response = await login({
         username,
         password,
-      });
+      }) as AuthResponse;
 
       if (!response.success) {
         setLoading(false);

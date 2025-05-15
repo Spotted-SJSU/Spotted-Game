@@ -4,6 +4,7 @@ const socketIo = require("socket.io");
 const http = require("http");
 const mysql = require("mysql2");
 const bcrypt = require("bcrypt");
+const path = require("path");
 
 const app = express();
 const server = http.createServer(app);
@@ -13,6 +14,9 @@ const io = socketIo(server, {
 
 app.use(cors());
 app.use(express.json());
+
+// Serve static files from the frontend build
+app.use(express.static(path.join(__dirname, '../frontend/dist')));
 
 // Image URLs mapped by type
 const IMAGES = {
@@ -729,4 +733,14 @@ server.listen(PORT, () => {
             console.log(`Initialized scores for ${result.affectedRows} users`);
         }
     });
+});
+
+// Serve the React app for any other routes
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, '../frontend/dist/index.html'));
+});
+
+// Health check endpoint
+app.get('/health', (req, res) => {
+  res.status(200).send('OK');
 });
