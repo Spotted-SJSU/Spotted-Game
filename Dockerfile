@@ -40,6 +40,9 @@ RUN cp -r frontend/dist/* /var/www/html/
 RUN ls -la /var/www/html/
 RUN cat /var/www/html/index.html | head -20
 
+# Create a test file to verify nginx
+RUN echo '<!DOCTYPE html><html><head><title>Test Page</title></head><body><h1>Nginx Test</h1><p>If you see this, nginx is working but the React app is not being served correctly.</p></body></html>' > /var/www/html/test.html
+
 # Use our nginx.conf as the main nginx config
 COPY nginx.conf /etc/nginx/nginx.conf
 
