@@ -1,15 +1,18 @@
-import { Group, Stack } from "@mantine/core";
+import { Group, Stack, Text } from "@mantine/core";
 import { useEffect, useState } from "react";
-import { fetchLeaderboard } from "../api/leaderboard-api";
+import {
+  fetchLeaderboard,
+  LeaderboardEntryResponse,
+} from "../api/leaderboard-api";
 import Loading from "./common/Loading";
 
 export default function Leaderboard() {
-  const [entries, setEntries] = useState<any[]>([]);
+  const [entries, setEntries] = useState<LeaderboardEntryResponse[]>([]);
   const [loading, setLoading] = useState<boolean>();
 
   const fetchLeaderboardData = async () => {
-    const res = await fetchLeaderboard();
-    setEntries(res);
+    const data = await fetchLeaderboard();
+    setEntries(data);
   };
 
   useEffect(() => {
@@ -25,8 +28,10 @@ export default function Leaderboard() {
   return (
     <Stack>
       {entries.map((entry) => (
-        // TODO: use response
-        <Group key={entry.id}>entry</Group>
+        <Group key={`${entry.Username}+${entry.Score}`} justify="space-between">
+          <Text>{entry.Username}</Text>
+          <Text>{entry.Score}</Text>
+        </Group>
       ))}
     </Stack>
   );

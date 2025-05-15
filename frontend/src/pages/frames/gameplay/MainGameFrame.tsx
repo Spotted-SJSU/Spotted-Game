@@ -21,28 +21,30 @@ export default function MainGameFrame() {
   const { user } = useAuthStore();
   const [loading, setLoading] = useState<boolean>(false);
   const [level, setLevel] = useState<GameplayEventPayload | null>(null);
+  const [previousCondition, setPreviousCondition] = useState<string>();
   const [showSummary, setShowSummary] = useState<boolean>();
   const [score, setScore] = useState<number>(0);
 
-  const onMessage = useCallback(
-    (event: GameplayEventPayload) => {
-      if (event.score === 0) {
-        setScore(0);
-      }
-      setLevel(event);
-      if (loading) setLoading(false);
-    },
-    [loading]
-  );
+  const onMessage = (event: GameplayEventPayload) => {
+    setLevel(event);
+    setLoading(false);
+  };
 
   const isGameplay = () => {
     return level?.levelCondition === "Gameplay";
   };
 
   useEffect(() => {
-    if (score <= 0) {
+    if (
+      level?.levelCondition === "Gameplay" &&
+      previousCondition !== level.levelCondition
+    ) {
+      setScore(0);
+      setShowSummary(false);
+    } else if (score <= 0) {
       setShowSummary(!isGameplay());
     }
+    setPreviousCondition(level?.levelCondition);
   }, [level]);
 
   useEffect(() => {
@@ -74,7 +76,10 @@ export default function MainGameFrame() {
         {score && <Text>Score: {score}</Text>}
         <Text>
           Time left:&nbsp;
-          <CountdownTimer duration={level.duration} />
+          <CountdownTimer
+            key={`${level.levelCondition}-${level.duration}`}
+            duration={level.duration}
+          />
         </Text>
       </Group>
       <Group>
