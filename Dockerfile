@@ -31,9 +31,6 @@ RUN cp -r frontend/dist/* /var/www/html/
 RUN ls -la /var/www/html/
 RUN cat /var/www/html/index.html | head -20
 
-# Create a test file to verify nginx
-RUN echo '<!DOCTYPE html><html><head><title>Test Page</title></head><body><h1>Nginx Test</h1><p>If you see this, nginx is working but the React app is not being served correctly.</p></body></html>' > /var/www/html/test.html
-
 # Use our nginx.conf as the main nginx config
 COPY nginx.conf /etc/nginx/nginx.conf
 
@@ -76,7 +73,7 @@ COPY <<-EOF /etc/supervisor/conf.d/node.conf
 [program:node]
 command=node /app/backend/server.js
 directory=/app/backend
-environment=PORT=3000
+environment=PORT=5001
 autostart=true
 autorestart=true
 stdout_logfile=/dev/stdout
@@ -87,12 +84,10 @@ EOF
 
 # Expose ports
 EXPOSE 80
-EXPOSE 3000
+EXPOSE 5001
 
 # Set the PORT environment variable for Render
-ENV PORT=3000
-ENV RENDER_EXTERNAL_PORT=3000
-ENV RENDER_EXTERNAL_URL=https://spotted-game.onrender.com
+ENV PORT=5001
 
 # Command to run
 CMD ["supervisord", "-c", "/etc/supervisor/supervisord.conf"] 
