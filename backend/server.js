@@ -74,6 +74,71 @@ let gameData = {
 };
 let activePlayers = new Map();
 
+// Helper functions for chat database operations
+const saveChatMessage = async (message) => {
+    try {
+        const { content, sender, timestamp } = message;
+        const senderId = sender.id;
+        const senderUsername = sender.username;
+
+        const sql = `
+            INSERT INTO ChatMessages 
+            (SenderID, SenderUsername, Content, Timestamp) 
+            VALUES (?, ?, ?, ?)
+        `;
+
+        db.query(sql, [senderId, senderUsername, content, new Date(timestamp)], (err, result) => {
+            if (err) {
+                console.error("Error saving chat message to database:", err);
+            } else {
+                console.log(`Chat message saved to database, ID: ${result.insertId}`);
+            }
+        });
+    } catch (error) {
+        console.error("Error in saveChatMessage:", error);
+    }
+};
+
+const fetchChatHistory = (limit = 50) => {
+    return new Promise((resolve, reject) => {
+        const sql = `
+            SELECT 
+                MessageID as id, 
+                SenderID as 'sender.id', 
+                SenderUsername as 'sender.username', 
+                Content as content, 
+                Timestamp as timestamp 
+            FROM ChatMessages 
+            ORDER BY Timestamp DESC 
+            LIMIT ?
+        `;
+
+        db.query(sql, [limit], (err, results) => {
+            if (err) {
+                console.error("Error fetching chat history:", err);
+                reject(err);
+                return;
+            }
+
+            // Process results to create proper message objects
+            const messages = results.map(row => {
+                return {
+                    id: row.id.toString(),
+                    content: row.content,
+                    sender: {
+                        id: row['sender.id'],
+                        username: row['sender.username']
+                    },
+                    timestamp: row.timestamp
+                };
+            });
+
+            // Return messages in chronological order
+            resolve(messages.reverse());
+        });
+    });
+};
+
 const generateFlagPosition = () => {
     const bgWidth = 800, bgHeight = 600;
     return {
@@ -90,10 +155,10 @@ const calculateDistance = (p1, p2) => {
 const getRandomCountryImages = () => {
     const selectedBackground = IMAGES.backgrounds[Math.floor(Math.random() * IMAGES.backgrounds.length)];
     const selectedFlag = IMAGES.flags[Math.floor(Math.random() * IMAGES.flags.length)];
-    
+
     console.log(`Selected background: ${selectedBackground}`);
     console.log(`Selected flag: ${selectedFlag}`);
-    
+
     return {
         background: selectedBackground,
         flag: selectedFlag
@@ -137,7 +202,7 @@ const startNewGame = () => {
         playerScores: new Map(),
         roundId: Date.now().toString() // Unique identifier based on timestamp
     };
-    
+
     console.log(`New game started with difficulty: ${difficulty}`);
     console.log(`Background: ${gameData.backgroundImageUrl}`);
     console.log(`Flag: ${gameData.targetImageUrl}`);
@@ -173,9 +238,9 @@ app.get("/start", (req, res) => {
             }
         });
     }
-    
+
     const levelInfo = startNewGame();
-    
+
     // Get current cycle position
     const now = Date.now();
     const timeInCycle = (now - cycleStartTime) % cycleDuration;
@@ -246,10 +311,10 @@ app.post("/click", (req, res) => {
     }
 
     const playerScore = Math.max(0, Math.round(points));
-    
+
     // Store the score for this player in the current round
     gameData.playerScores.set(userId, playerScore);
-    
+
     console.log(`Player ${userId} scored ${playerScore} points`);
 
     // Check if the user exists in the database and update their score
@@ -452,6 +517,25 @@ app.post("/login", (req, res) => {
     });
 });
 
+app.get("/chat-history", async (req, res) => {
+    const limit = parseInt(req.query.limit) || 50;
+
+    try {
+        const messages = await fetchChatHistory(limit);
+        res.json({
+            success: true,
+            error: null,
+            data: messages
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            error: "Failed to fetch chat history",
+            data: null
+        });
+    }
+});
+
 // --- WebSocket ---
 io.on("connection", (socket) => {
     console.log("New player connected!");
@@ -470,7 +554,7 @@ io.on("connection", (socket) => {
         userId = data.userId;
         console.log(`Player ${userId} registered`);
         activePlayers.set(userId, { userId }); // Add to active players
-        
+
         // Initialize game state if needed
         if (!gameData.flagPosition || !gameActive) {
             console.log("Initializing new game state");
@@ -478,7 +562,7 @@ io.on("connection", (socket) => {
             cycleStartTime = Date.now();
             startNewGame();
         }
-        
+
         // If this is the first player, we need to restart the game cycle
         if (activePlayers.size === 1) {
             console.log("First player joined - starting game cycle");
@@ -498,6 +582,19 @@ io.on("connection", (socket) => {
         }
     });
 
+    // Handle incoming chat messages
+    socket.on("chatMessage", (message) => {
+        // New format with full message object
+        console.log(`Received chat message from ${message.sender.username}: ${message.content}`);
+        // Use the message as is since it already has all the required information, but add server timestamp to ensure consistency
+        const chatMessage = {
+            ...message,
+            timestamp: new Date()
+        };
+        io.emit("chatMessage", chatMessage);
+        saveChatMessage(chatMessage); // Save to database
+    });
+
     socket.on("disconnect", () => {
         console.log(`Player ${userId} disconnected`);
         if (userId) activePlayers.delete(userId);
@@ -506,9 +603,9 @@ io.on("connection", (socket) => {
 
 //Active Players Emitting Logic
 const broadcastActivePlayers = () => {
-        const players = Array.from(activePlayers.values());
-        io.emit("activePlayersUpdate", players); // Emit all active players
-    };
+    const players = Array.from(activePlayers.values());
+    io.emit("activePlayersUpdate", players); // Emit all active players
+};
 
 setInterval(broadcastActivePlayers, 1000); // emit every second
 
@@ -552,7 +649,7 @@ const emitLevelInfo = () => {
 
     // Calculate remaining time in gameplay phase
     const remainingGameplayTime = Math.floor((gameplayDuration - timeInCycle) / 1000);
-    
+
     // Calculate remaining time in summary phase
     const remainingSummaryTime = Math.floor((cycleDuration - timeInCycle) / 1000);
 
@@ -718,13 +815,31 @@ const levelInfoInterval = setInterval(emitLevelInfo, 10000);
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
     console.log(`🚀 Server running on port ${PORT}`);
-    
+
     // Initialize scores for existing users with NULL scores
     db.query("UPDATE Users SET Score = 0 WHERE Score IS NULL", (err, result) => {
         if (err) {
             console.error("Error initializing scores:", err);
         } else if (result.affectedRows > 0) {
             console.log(`Initialized scores for ${result.affectedRows} users`);
+        }
+    });
+
+    // Create ChatMessages table if it doesn't exist
+    const createChatTableSQL = `
+        CREATE TABLE IF NOT EXISTS ChatMessages (
+            MessageID INT AUTO_INCREMENT PRIMARY KEY,
+            SenderID VARCHAR(255) NOT NULL,
+            SenderUsername VARCHAR(255) NOT NULL,
+            Content TEXT NOT NULL,
+            Timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
+        )
+    `;
+    db.query(createChatTableSQL, (err, result) => {
+        if (err) {
+            console.error("Error creating chat messages table:", err);
+        } else {
+            console.log("ChatMessages table ready");
         }
     });
 });

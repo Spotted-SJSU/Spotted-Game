@@ -1,13 +1,19 @@
 import { ChatMessage } from "../types/chat/ChatMessage";
+import { socket } from "../api/common";
+import { useAuthStore } from "../stores/AuthStore";
 
-// Simulated WebSocket implementation - would be replaced with actual WebSocket
 class ChatService {
   private static instance: ChatService;
   private callbacks: Array<(message: ChatMessage) => void> = [];
-  private mockInterval: NodeJS.Timeout | null = null;
+  private isListening: boolean = false;
 
   private constructor() {
     console.log("ChatService initialized");
+
+    // Listen for incoming chat messages from the server
+    socket.on("chatMessage", (message: ChatMessage) => {
+      this.notifyListeners(message);
+    });
   }
 
   public static getInstance(): ChatService {
@@ -18,27 +24,33 @@ class ChatService {
   }
 
   public startListening(): void {
-    // // For demo purposes, send a system message every 30 seconds
-    // this.mockInterval = setInterval(() => {
-    //   const mockMessage: ChatMessage = {
-    //     id: Math.random().toString(36).substring(7),
-    //     content: `Game update: ${new Date().toLocaleTimeString()}`,
-    //     sender: {
-    //       userID: "system",
-    //       username: "System",
-    //     },
-    //     timestamp: new Date(),
-    //   };
-      
-    //   this.notifyListeners(mockMessage);
-    // }, 30000);
+    if (!this.isListening) {
+      this.isListening = true;
+      console.log("ChatService started listening");
+    }
   }
 
   public stopListening(): void {
-    if (this.mockInterval) {
-      clearInterval(this.mockInterval);
-      this.mockInterval = null;
+    if (this.isListening) {
+      this.isListening = false;
+      console.log("ChatService stopped listening");
     }
+  }
+
+  public sendMessage(content: string): void {
+    const user = useAuthStore.getState().user;
+    if (!user) return;
+
+    const message: ChatMessage = {
+      id: Date.now().toString(),
+      content,
+      sender: user,
+      timestamp: new Date(),
+    };
+
+    // Send to server with full message object
+    socket.emit("chatMessage", message);
+
   }
 
   public addMessageListener(callback: (message: ChatMessage) => void): void {

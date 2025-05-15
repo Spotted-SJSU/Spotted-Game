@@ -4,6 +4,7 @@ import { fetchChatMessages, sendChatMessage } from "../../../api/chat-api";
 import { useChatStore } from "../../../stores/ChatStore";
 import { useAuthStore } from "../../../stores/AuthStore";
 import { ChatMessage } from "../../../types/chat/ChatMessage";
+import ChatService from "../../../services/ChatService";
 
 export default function ChatFrame() {
   const { user } = useAuthStore();
@@ -13,6 +14,7 @@ export default function ChatFrame() {
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const viewport = useRef<HTMLDivElement>(null);
+  const chatService = ChatService.getInstance();
 
   // Load initial messages
   useEffect(() => {
@@ -51,19 +53,21 @@ export default function ChatFrame() {
   // Handle new message submission
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!message.trim()) return;
+    if (!message.trim() || !user) return;
 
-    const response = await sendChatMessage(message);
-    if (response.success && response.data) {
-      addMessage(response.data);
+    try {
+      // Use the ChatService to send the message via WebSocket
+      chatService.sendMessage(message);
       setMessage("");
-      
+
       // Scroll to bottom after sending message
       setTimeout(() => {
         if (viewport.current) {
           viewport.current.scrollTo({ top: viewport.current.scrollHeight, behavior: 'smooth' });
         }
       }, 100);
+    } catch (error) {
+      console.error("Failed to send message:", error);
     }
   };
 
@@ -78,28 +82,28 @@ export default function ChatFrame() {
     <Stack h="100%">
       <strong>Chat</strong>
       <Flex direction="column" h="100%" style={{ overflow: 'hidden' }}>
-        <ScrollArea 
-          h="300px" 
-          viewportRef={viewport} 
+        <ScrollArea
+          h="300px"
+          viewportRef={viewport}
           onScrollPositionChange={handleScrollToTop}
           style={{ flex: 1 }}
         >
           <Stack gap="xs">
             {messages.map((msg: ChatMessage) => (
               <div key={msg.id} style={{
-                alignSelf: msg.sender.userID === user?.userID ? 'flex-end' : 'flex-start',
-                backgroundColor: msg.sender.userID === user?.userID ? '#FFD700' : '#f1f1f1',
+                alignSelf: msg.sender.id === user?.id ? 'flex-end' : 'flex-start',
+                backgroundColor: msg.sender.id === user?.id ? '#FFD700' : '#f1f1f1',
                 padding: '8px 12px',
                 borderRadius: '12px',
                 maxWidth: '70%',
-                marginLeft: msg.sender.userID === user?.userID ? 'auto' : '0',
-                marginRight: msg.sender.userID === user?.userID ? '0' : 'auto',
+                marginLeft: msg.sender.id === user?.id ? 'auto' : '0',
+                marginRight: msg.sender.id === user?.id ? '0' : 'auto',
                 wordBreak: 'break-word'
               }}>
                 <Text size="xs" fw={700}>{msg.sender.username}</Text>
                 <Text>{msg.content}</Text>
                 <Text size="xs" ta="right">
-                  {new Date(msg.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                  {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                 </Text>
               </div>
             ))}
