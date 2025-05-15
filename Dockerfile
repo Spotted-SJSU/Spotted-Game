@@ -16,6 +16,15 @@ RUN cd frontend && npm install
 # Copy application code
 COPY . .
 
+# Create a healthcheck endpoint file
+RUN echo "// Health check endpoint" > /app/health-check.js
+RUN echo "app.get('/health', (req, res) => {" >> /app/health-check.js
+RUN echo "  res.status(200).send('OK');" >> /app/health-check.js
+RUN echo "});" >> /app/health-check.js
+
+# Append the health check to server.js
+RUN cat /app/health-check.js >> /app/backend/server.js
+
 # Build the frontend
 RUN cd frontend && npm run build
 
@@ -72,9 +81,6 @@ stdout_logfile_maxbytes=0
 stderr_logfile=/dev/stderr
 stderr_logfile_maxbytes=0
 EOF
-
-# Create a healthcheck endpoint in the backend
-RUN echo "\n\n// Health check endpoint\napp.get('/health', (req, res) => {\n  res.status(200).send('OK');\n});\n" >> /app/backend/server.js
 
 # Expose ports
 EXPOSE 80
