@@ -3,7 +3,7 @@ FROM node:20-alpine
 WORKDIR /app
 
 # Install necessary dependencies
-RUN apk add --no-cache python3 g++ make nginx
+RUN apk add --no-cache python3 g++ make nginx supervisor
 
 # Copy package.json files first (for better caching)
 COPY backend/package*.json ./backend/
@@ -26,13 +26,16 @@ RUN cp -r frontend/dist/* /var/www/html/
 # Use our nginx.conf as the main nginx config
 COPY nginx.conf /etc/nginx/nginx.conf
 
-# Create a startup script directly in the build
-RUN printf '#!/bin/sh\necho "Starting application..."\necho "Checking frontend files:"\nls -la /var/www/html\necho "Checking nginx config:"\ncat /etc/nginx/nginx.conf\necho "Starting backend server..."\ncd /app/backend && node server.js & \necho "Starting nginx..."\nnginx\n' > /app/start.sh
-RUN chmod +x /app/start.sh
+# Create supervisor configuration
+RUN mkdir -p /etc/supervisor.d/
+RUN echo "[supervisord]\nnodaemon=true\n\n[program:nginx]\ncommand=nginx -g 'daemon off;'\nautostart=true\nautorestart=true\nstdout_logfile=/dev/stdout\nstdout_logfile_maxbytes=0\nstderr_logfile=/dev/stderr\nstderr_logfile_maxbytes=0\n\n[program:node]\ncommand=node /app/backend/server.js\nautostart=true\nautorestart=true\nstdout_logfile=/dev/stdout\nstdout_logfile_maxbytes=0\nstderr_logfile=/dev/stderr\nstderr_logfile_maxbytes=0" > /etc/supervisor.d/supervisord.ini
+
+# Create a healthcheck endpoint in the backend
+RUN echo "\n\n// Health check endpoint\napp.get('/health', (req, res) => {\n  res.status(200).send('OK');\n});\n" >> /app/backend/server.js
 
 # Expose ports
 EXPOSE 80
 EXPOSE 5001
 
 # Command to run
-CMD ["/app/start.sh"] 
+CMD ["supervisord", "-c", "/etc/supervisor.d/supervisord.ini"] 
