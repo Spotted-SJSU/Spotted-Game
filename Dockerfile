@@ -12,6 +12,7 @@ COPY frontend/package*.json ./frontend/
 # Install dependencies
 RUN cd backend && npm install
 RUN cd frontend && npm install
+RUN cd frontend && npm install react-router-dom
 
 # Copy application code
 COPY . .
