@@ -26,9 +26,52 @@ RUN cp -r frontend/dist/* /var/www/html/
 # Use our nginx.conf as the main nginx config
 COPY nginx.conf /etc/nginx/nginx.conf
 
-# Create supervisor configuration
-RUN mkdir -p /etc/supervisor.d/
-RUN echo "[supervisord]\nnodaemon=true\n\n[program:nginx]\ncommand=nginx -g 'daemon off;'\nautostart=true\nautorestart=true\nstdout_logfile=/dev/stdout\nstdout_logfile_maxbytes=0\nstderr_logfile=/dev/stderr\nstderr_logfile_maxbytes=0\n\n[program:node]\ncommand=node /app/backend/server.js\nautostart=true\nautorestart=true\nstdout_logfile=/dev/stdout\nstdout_logfile_maxbytes=0\nstderr_logfile=/dev/stderr\nstderr_logfile_maxbytes=0" > /etc/supervisor.d/supervisord.ini
+# Create a proper supervisor configuration
+RUN mkdir -p /etc/supervisor/conf.d/
+COPY <<-EOF /etc/supervisor/supervisord.conf
+[unix_http_server]
+file=/var/run/supervisor.sock
+chmod=0700
+
+[supervisord]
+nodaemon=true
+logfile=/dev/null
+logfile_maxbytes=0
+pidfile=/var/run/supervisord.pid
+
+[rpcinterface:supervisor]
+supervisor.rpcinterface_factory=supervisor.rpcinterface:make_main_rpcinterface
+
+[supervisorctl]
+serverurl=unix:///var/run/supervisor.sock
+
+[include]
+files=/etc/supervisor/conf.d/*.conf
+EOF
+
+# Create program configs
+COPY <<-EOF /etc/supervisor/conf.d/nginx.conf
+[program:nginx]
+command=nginx -g 'daemon off;'
+autostart=true
+autorestart=true
+stdout_logfile=/dev/stdout
+stdout_logfile_maxbytes=0
+stderr_logfile=/dev/stderr
+stderr_logfile_maxbytes=0
+EOF
+
+COPY <<-EOF /etc/supervisor/conf.d/node.conf
+[program:node]
+command=node /app/backend/server.js
+directory=/app/backend
+autostart=true
+autorestart=true
+stdout_logfile=/dev/stdout
+stdout_logfile_maxbytes=0
+stderr_logfile=/dev/stderr
+stderr_logfile_maxbytes=0
+EOF
 
 # Create a healthcheck endpoint in the backend
 RUN echo "\n\n// Health check endpoint\napp.get('/health', (req, res) => {\n  res.status(200).send('OK');\n});\n" >> /app/backend/server.js
@@ -38,4 +81,4 @@ EXPOSE 80
 EXPOSE 5001
 
 # Command to run
-CMD ["supervisord", "-c", "/etc/supervisor.d/supervisord.ini"] 
+CMD ["supervisord", "-c", "/etc/supervisor/supervisord.conf"] 
