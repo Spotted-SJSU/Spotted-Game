@@ -29,9 +29,15 @@ RUN cat /app/health-check.js >> /app/backend/server.js
 # Build the frontend
 RUN cd frontend && npm run build
 
+# Debug: List build content
+RUN ls -la frontend/dist/
+
 # Set up nginx for the frontend
 RUN mkdir -p /var/www/html
 RUN cp -r frontend/dist/* /var/www/html/
+
+# Debug: Verify copied content
+RUN ls -la /var/www/html/
 
 # Use our nginx.conf as the main nginx config
 COPY nginx.conf /etc/nginx/nginx.conf
