@@ -5,7 +5,7 @@ import ActivePlayersFrame from "./frames/gameplay/ActivePlayersFrame";
 import ChatFrame from "./frames/gameplay/ChatFrame";
 import { useChatService } from "../hooks/useChatService";
 import { useAuthStore } from "../stores/AuthStore";
-import { useNavigate } from "react-router";
+import { useNavigate } from "react-router-dom";
 import { useDisclosure } from "@mantine/hooks";
 import Leaderboard from "../components/Leaderboard";
 
