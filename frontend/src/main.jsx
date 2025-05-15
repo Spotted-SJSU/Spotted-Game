@@ -4,6 +4,7 @@ import { createRoot } from 'react-dom/client'
 import Login from './pages/Login'
 import Home from './pages/Home'
 import './index.css'
+import './responsive.css'
 import '@mantine/core/styles.css';
 import '@mantine/notifications/styles.css';
 import { createTheme, MantineProvider } from '@mantine/core'

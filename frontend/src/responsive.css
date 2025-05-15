@@ -1,0 +1,79 @@
+/* Mobile-first responsive styles */
+
+/* Base styles for all devices */
+:root {
+  --header-height: 60px;
+  --aside-width-desktop: 300px;
+  --aside-width-mobile: 100%;
+}
+
+/* Fix overflow issues on mobile */
+html, body {
+  overflow-x: hidden;
+  height: 100%;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+/* Mobile-specific styles (base styles) */
+.responsive-container {
+  width: 100%;
+  max-width: 100%;
+  padding: 0 10px;
+  margin: 0 auto;
+}
+
+.game-image {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Small devices (landscape phones) */
+@media (min-width: 576px) {
+  .responsive-container {
+    padding: 0 15px;
+  }
+}
+
+/* Medium devices (tablets) */
+@media (min-width: 768px) {
+  .responsive-container {
+    padding: 0 20px;
+  }
+}
+
+/* Large devices (desktops) */
+@media (min-width: 992px) {
+  .responsive-container {
+    padding: 0 30px;
+  }
+}
+
+/* App shell responsive behavior */
+@media (max-width: 767px) {
+  .mobile-stack {
+    flex-direction: column !important;
+  }
+  
+  .mobile-full-width {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+  
+  .mobile-hidden {
+    display: none !important;
+  }
+  
+  .mobile-visible {
+    display: block !important;
+  }
+  
+  .mobile-text-center {
+    text-align: center !important;
+  }
+  
+  .mobile-margin {
+    margin: 8px 0 !important;
+  }
+} 
