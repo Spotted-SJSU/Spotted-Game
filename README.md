@@ -54,14 +54,27 @@ The game is live and playable at: [https://spotted-game.onrender.com](https://sp
    cd Spotted-Game
    ```
 
-2. Start Docker on your machine
+2. Create a `.env` file in the project root with your MySQL database credentials:
+   ```
+   # Database Configuration
+   DB_HOST=your_mysql_host
+   DB_USER=your_mysql_user
+   DB_PASSWORD=your_mysql_password
+   DB_NAME=your_database_name
+   DB_PORT=3306
+   
+   # Server Configuration
+   PORT=5001
+   ```
 
-3. Build and run using Docker Compose:
+3. Start Docker on your machine
+
+4. Build and run using Docker Compose:
    ```bash
    docker-compose up --build
    ```
 
-4. Access the application at `http://localhost:3000`
+5. Access the application at `http://localhost:3000`
 
 #### Manual Setup
 

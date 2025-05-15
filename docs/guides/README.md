@@ -87,6 +87,26 @@ This directory contains user guides and documentation for setting up, running, a
 - Authentication using bcrypt password hashing
 - Session management via client-side storage 
 
+## Environment Variables
+
+The application uses environment variables for configuration, which keeps sensitive information like database credentials secure. A `.env.example` file is provided in the repository which you should copy to create your own `.env` file:
+
+```bash
+# Copy the example file
+cp .env.example .env
+
+# Edit with your actual credentials
+nano .env  # or use any text editor
+```
+
+Required environment variables:
+- `DB_HOST` - Database hostname
+- `DB_USER` - Database username
+- `DB_PASSWORD` - Database password
+- `DB_NAME` - Database name
+- `DB_PORT` - Database port (usually 3306 for MySQL)
+- `PORT` - Application port (default: 5001)
+
 ## Deployment Guide
 
 ### Deploying to Render.com
