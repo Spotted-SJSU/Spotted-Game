@@ -8,12 +8,13 @@ This directory contains user guides and documentation for setting up, running, a
 - Docker Desktop installed
 - Git installed
 - Node.js (for local development)
+- MySQL (if running without Docker)
 
 ### Setting Up the Application
 
 1. Clone the repository:
    ```bash
-   git clone [repository-url]
+   git clone https://github.com/Spotted-SJSU/Spotted-Game.git
    cd Spotted-Game
    ```
 
@@ -31,23 +32,32 @@ This directory contains user guides and documentation for setting up, running, a
 ### Getting Started
 1. **Registration**
    - Navigate to the signup page
-   - Enter your email and password
-   - Verify your email address
+   - Enter your username and password
+   - Create your account to start playing
 
 2. **Logging In**
    - Go to the login page
    - Enter your credentials
-   - Access your dashboard
+   - Access the game interface
 
-3. **Creating a Game**
-   - Click "Create Game" button
-   - Select game settings
-   - Share the game code with friends
+3. **Playing the Game**
+   - Once logged in, you'll join the active game automatically
+   - Find the hidden flag in the background image as quickly as possible
+   - Click or tap where you think the flag is hidden
+   - Score points based on accuracy and speed
+   - Chat with other players using the integrated chat system
 
-4. **Joining a Game**
-   - Click "Join Game" button
-   - Enter the game code
-   - Wait for the game to start
+4. **Game Cycle**
+   - 20 seconds of gameplay to find the flag
+   - 10 seconds of summary showing scores and flag location
+   - Game cycles continue with new flag positions and images
+
+## Mobile Support Features
+- Touch-based flag detection
+- Responsive UI adapts to different screen sizes
+- Collapsible chat interface on small screens
+- Portrait and landscape orientation support
+- Optimized performance for mobile devices
 
 ## Development Guide
 
@@ -56,14 +66,14 @@ This directory contains user guides and documentation for setting up, running, a
    ```bash
    cd frontend
    npm install
-   npm start
+   npm run dev
    ```
 
 2. Backend Development:
    ```bash
    cd backend
    npm install
-   npm run dev
+   npm start
    ```
 
 ### API Documentation
@@ -72,5 +82,7 @@ This directory contains user guides and documentation for setting up, running, a
 - Authentication requirements
 - Request/response formats
 
-## Troubleshooting Guide
-Common issues and their solutions are documented in [troubleshooting.md](./troubleshooting.md) 
+## Database Information
+- MySQL database with tables for Users, ChatMessages
+- Authentication using bcrypt password hashing
+- Session management via client-side storage 

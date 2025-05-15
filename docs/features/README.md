@@ -2,44 +2,56 @@
 
 This directory contains detailed documentation for all features in the Spotted Game application.
 
-## Core Features
+## Implemented Features
 
 ### 1. User Authentication
-- **Description**: Secure user authentication system
-- **Requirements**:
-  - User registration with email verification
-  - Secure login/logout functionality
-  - Password reset capabilities
-  - Session management
+- **Description**: Secure user authentication system with MySQL database
+- **Implementation**:
+  - User registration with username/password
+  - Secure login using bcrypt password hashing
+  - Session management via client-side storage
+  - User role and permissions
 
-### 2. Game Creation and Management
-- **Description**: Create and manage game instances
-- **Requirements**:
-  - Game room creation
-  - Player joining mechanism
-  - Game state management
-  - Score tracking
+### 2. Flag Finding Gameplay
+- **Description**: Core gameplay mechanics for finding hidden flags
+- **Implementation**:
+  - Dynamic flag placement on background images
+  - Three difficulty levels (Easy, Medium, Hard)
+  - Click detection and coordinate normalization
+  - Flag opacity variations based on difficulty
 
-### 3. Real-time Gameplay
-- **Description**: Real-time multiplayer gameplay functionality
-- **Requirements**:
-  - Real-time updates
-  - Player synchronization
-  - Game state broadcasting
-  - Error handling and recovery
+### 3. Real-time Multiplayer
+- **Description**: Real-time multiplayer functionality using Socket.IO
+- **Implementation**:
+  - Player presence detection
+  - Active player list updating
+  - Real-time game state synchronization
+  - Game cycle management (gameplay and summary phases)
 
-### 4. User Profile Management
-- **Description**: User profile and settings management
-- **Requirements**:
-  - Profile editing
-  - Game history tracking
-  - Statistics and achievements
-  - User preferences
+### 4. Scoring System
+- **Description**: Comprehensive scoring system
+- **Implementation**:
+  - Base points for flag detection
+  - Time-based bonus points (faster finds = higher score)
+  - Proximity scoring (closer clicks = more points)
+  - Persistent leaderboard
 
-## Implementation Details
+### 5. Live Chat System
+- **Description**: In-game chat functionality
+- **Implementation**:
+  - Real-time message broadcasting
+  - Persistent chat history in MySQL
+  - Player identification in messages
 
-Each feature's detailed implementation documentation can be found in its respective subdirectory:
-- [Authentication Implementation](./authentication.md)
-- [Game Management Implementation](./game-management.md)
-- [Realtime Features Implementation](./realtime.md)
-- [User Profile Implementation](./user-profile.md) 
+### 6. Mobile Responsiveness
+- **Description**: Full mobile device support
+- **Implementation**:
+  - Responsive layout with adaptive UI
+  - Touch input support for flag detection
+  - Optimized game experience across devices
+
+## Contributors
+- **Aniket Mishra** - Backend and Integration Engineer
+- **Ashwabh Bhatnagar** - Backend and Database Engineer
+- **Vivek Raman** - Frontend and Integration Engineer
+- **Aditya Nair** - Frontend and Infrastructure Engineer 

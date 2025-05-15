@@ -9,7 +9,6 @@
 Request:
 {
   "username": "string",
-  "email": "string",
   "password": "string"
 }
 
@@ -27,7 +26,7 @@ Response:
 ```json
 Request:
 {
-  "email": "string",
+  "username": "string",
   "password": "string"
 }
 
@@ -74,20 +73,14 @@ Response:
 
 ### Game Management
 
-5. POST `/game/start` (Start New Game)
+5. GET `/game/status` (Get Current Game Status)
 ```json
-Request:
-{
-  "difficulty": "string",
-  "maxPlayers": "number"
-}
-
 Response:
 {
   "success": true,
   "error": null,
   "data": {
-    "message": "Game started",
+    "message": "Game status retrieved",
     "flagPosition": {
       "x": 210,
       "y": 350
@@ -107,35 +100,13 @@ Response:
           "y": 0.766667
         }
       },
-      "duration": 38
+      "duration": 20
     }
   }
 }
 ```
 
-6. POST `/game/join` (Join Existing Game)
-```json
-Request:
-{
-  "gameId": "string"
-}
-
-Response:
-{
-  "success": true,
-  "error": null,
-  "data": {
-    "message": "Successfully joined game",
-    "gameState": {
-      "currentPlayers": ["array"],
-      "gameStatus": "string",
-      "timeRemaining": "number"
-    }
-  }
-}
-```
-
-7. POST `/game/click` (Player Click Action)
+6. POST `/game/click` (Player Click Action)
 ```json
 Request:
 {
@@ -154,7 +125,7 @@ Response:
 }
 ```
 
-8. GET `/game/leaderboard` (Get Game Leaderboard)
+7. GET `/game/leaderboard` (Get Game Leaderboard)
 ```json
 Response:
 {
@@ -175,7 +146,7 @@ Response:
 
 ### User Profile
 
-9. GET `/profile` (Get User Profile)
+8. GET `/profile` (Get User Profile)
 ```json
 Response:
 {
@@ -184,23 +155,20 @@ Response:
   "data": {
     "userId": "string",
     "username": "string",
-    "email": "string",
     "stats": {
       "gamesPlayed": "number",
       "totalScore": "number",
-      "averageScore": "number",
-      "wins": "number"
+      "averageScore": "number"
     }
   }
 }
 ```
 
-10. PUT `/profile` (Update User Profile)
+9. PUT `/profile` (Update User Profile)
 ```json
 Request:
 {
-  "username": "string",
-  "email": "string"
+  "username": "string"
 }
 
 Response:
