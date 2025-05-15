@@ -648,6 +648,16 @@ const emitLevelInfo = () => {
         console.log(`Game resumed with ${playerCount} player(s)`);
     }
 
+    // Initialize game state if needed
+    if (!gameData.flagPosition) {
+        console.log("Flag position is null, initializing new game...");
+        startNewGame();
+        if (!gameData.flagPosition) {
+            console.log("Failed to initialize flag position, skipping level info update");
+            return;
+        }
+    }
+
     const now = Date.now();
     const timeInCycle = (now - cycleStartTime) % cycleDuration;
     console.log(`Time in cycle: ${timeInCycle}ms, Gameplay duration: ${gameplayDuration}ms`);
@@ -660,7 +670,7 @@ const emitLevelInfo = () => {
 
     // Calculate remaining time in gameplay phase
     const remainingGameplayTime = Math.floor((gameplayDuration - timeInCycle) / 1000);
-
+    
     // Calculate remaining time in summary phase
     const remainingSummaryTime = Math.floor((cycleDuration - timeInCycle) / 1000);
 
@@ -688,24 +698,29 @@ const emitLevelInfo = () => {
             };
         } else {
             console.log("Continuing existing game");
+            
+            // Safe access to flag position coordinates
+            const flagPosition = gameData.flagPosition || { x: 0, y: 0 };
+            const flagSize = gameData.flagSize || { width: 100, height: 60 };
+            
             response = {
                 ...response,
                 levelCondition,
-                difficulty: gameData.difficulty,
-                backgroundImageUrl: gameData.backgroundImageUrl,
-                targetImageUrl: gameData.targetImageUrl,
+                difficulty: gameData.difficulty || 'Easy',
+                backgroundImageUrl: gameData.backgroundImageUrl || '',
+                targetImageUrl: gameData.targetImageUrl || '',
                 targetCoords: {
                     top_left: {
-                        x: gameData.flagPosition.x / 800,
-                        y: gameData.flagPosition.y / 600
+                        x: flagPosition.x / 800,
+                        y: flagPosition.y / 600
                     },
                     bot_right: {
-                        x: (gameData.flagPosition.x + gameData.flagSize.width) / 800,
-                        y: (gameData.flagPosition.y + gameData.flagSize.height) / 600
+                        x: (flagPosition.x + flagSize.width) / 800,
+                        y: (flagPosition.y + flagSize.height) / 600
                     }
                 },
                 duration,
-                opacity: gameData.opacity,
+                opacity: gameData.opacity || 1,
                 score: gameData.score
             };
         }
@@ -721,40 +736,44 @@ const emitLevelInfo = () => {
             score
         }));
 
+        // Safe access to flag position coordinates
+        const flagPosition = gameData.flagPosition || { x: 0, y: 0 };
+        const flagSize = gameData.flagSize || { width: 100, height: 60 };
+
         response = {
             ...response,
             levelCondition,
-            difficulty: gameData.difficulty,
-            backgroundImageUrl: gameData.backgroundImageUrl,
-            targetImageUrl: gameData.targetImageUrl,
+            difficulty: gameData.difficulty || 'Easy',
+            backgroundImageUrl: gameData.backgroundImageUrl || '',
+            targetImageUrl: gameData.targetImageUrl || '',
             targetCoords: {
                 top_left: {
-                    x: gameData.flagPosition.x / 800,
-                    y: gameData.flagPosition.y / 600
+                    x: flagPosition.x / 800,
+                    y: flagPosition.y / 600
                 },
                 bot_right: {
-                    x: (gameData.flagPosition.x + gameData.flagSize.width) / 800,
-                    y: (gameData.flagPosition.y + gameData.flagSize.height) / 600
+                    x: (flagPosition.x + flagSize.width) / 800,
+                    y: (flagPosition.y + flagSize.height) / 600
                 }
             },
             duration,
-            opacity: gameData.opacity,
+            opacity: gameData.opacity || 1,
             score: undefined,
             lastGameData: {
-                difficulty: gameData.difficulty,
-                backgroundImageUrl: gameData.backgroundImageUrl,
-                targetImageUrl: gameData.targetImageUrl,
-                opacity: gameData.opacity,
-                roundId: gameData.roundId,
+                difficulty: gameData.difficulty || 'Easy',
+                backgroundImageUrl: gameData.backgroundImageUrl || '',
+                targetImageUrl: gameData.targetImageUrl || '',
+                opacity: gameData.opacity || 1,
+                roundId: gameData.roundId || Date.now().toString(),
                 playerScores: scoresArray,
                 targetCoords: {
                     top_left: {
-                        x: gameData.flagPosition.x / 800,
-                        y: gameData.flagPosition.y / 600
+                        x: flagPosition.x / 800,
+                        y: flagPosition.y / 600
                     },
                     bot_right: {
-                        x: (gameData.flagPosition.x + gameData.flagSize.width) / 800,
-                        y: (gameData.flagPosition.y + gameData.flagSize.height) / 600
+                        x: (flagPosition.x + flagSize.width) / 800,
+                        y: (flagPosition.y + flagSize.height) / 600
                     }
                 }
             }
@@ -771,40 +790,44 @@ const emitLevelInfo = () => {
             score
         }));
 
+        // Safe access to flag position coordinates
+        const flagPosition = gameData.flagPosition || { x: 0, y: 0 };
+        const flagSize = gameData.flagSize || { width: 100, height: 60 };
+
         response = {
             ...response,
             levelCondition,
-            difficulty: gameData.difficulty,
-            backgroundImageUrl: gameData.backgroundImageUrl,
-            targetImageUrl: gameData.targetImageUrl,
+            difficulty: gameData.difficulty || 'Easy',
+            backgroundImageUrl: gameData.backgroundImageUrl || '',
+            targetImageUrl: gameData.targetImageUrl || '',
             targetCoords: {
                 top_left: {
-                    x: gameData.flagPosition.x / 800,
-                    y: gameData.flagPosition.y / 600
+                    x: flagPosition.x / 800,
+                    y: flagPosition.y / 600
                 },
                 bot_right: {
-                    x: (gameData.flagPosition.x + gameData.flagSize.width) / 800,
-                    y: (gameData.flagPosition.y + gameData.flagSize.height) / 600
+                    x: (flagPosition.x + flagSize.width) / 800,
+                    y: (flagPosition.y + flagSize.height) / 600
                 }
             },
             duration,
-            opacity: gameData.opacity,
+            opacity: gameData.opacity || 1,
             score: undefined,
             lastGameData: {
-                difficulty: gameData.difficulty,
-                backgroundImageUrl: gameData.backgroundImageUrl,
-                targetImageUrl: gameData.targetImageUrl,
-                opacity: gameData.opacity,
-                roundId: gameData.roundId,
+                difficulty: gameData.difficulty || 'Easy',
+                backgroundImageUrl: gameData.backgroundImageUrl || '',
+                targetImageUrl: gameData.targetImageUrl || '',
+                opacity: gameData.opacity || 1,
+                roundId: gameData.roundId || Date.now().toString(),
                 playerScores: scoresArray,
                 targetCoords: {
                     top_left: {
-                        x: gameData.flagPosition.x / 800,
-                        y: gameData.flagPosition.y / 600
+                        x: flagPosition.x / 800,
+                        y: flagPosition.y / 600
                     },
                     bot_right: {
-                        x: (gameData.flagPosition.x + gameData.flagSize.width) / 800,
-                        y: (gameData.flagPosition.y + gameData.flagSize.height) / 600
+                        x: (flagPosition.x + flagSize.width) / 800,
+                        y: (flagPosition.y + flagSize.height) / 600
                     }
                 }
             }
