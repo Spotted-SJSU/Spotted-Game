@@ -1,4 +1,4 @@
-import React, { useRef, useState, useEffect } from "react";
+import React, { useRef, useState, useEffect, useCallback } from "react";
 import { Bounds } from "../../types/GameplayEventPayload";
 import { Image as MantineImage } from "@mantine/core";
 import { useMouse } from "@mantine/hooks";
@@ -52,6 +52,12 @@ export default function ImageWithOverlay(props: ImageWithOverlayProps) {
     };
   };
 
+  const getWidth = () => {
+    if (!bgImageRef) return {};
+    const bgImageBounds = bgImageRef.current?.getClientRects().item(0)!;
+    return bgImageBounds.width;
+  };
+
   const trySubmitClick = async () => {
     if (!isGameplay) return;
 
@@ -94,7 +100,7 @@ export default function ImageWithOverlay(props: ImageWithOverlayProps) {
             ...getBounds(),
             opacity: opacity,
           }}
-          width={pos.bot_right.x - pos.top_left.x}
+          width={getWidth() * (pos.bot_right.x - pos.top_left.x)}
           height="auto"
           alt="Flag"
         />

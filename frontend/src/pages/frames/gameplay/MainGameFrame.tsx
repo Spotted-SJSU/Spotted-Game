@@ -7,7 +7,14 @@ import ImageWithOverlay from "../../../components/gameplay/ImageWithOverlay";
 import { useAuthStore } from "../../../stores/AuthStore";
 import { connect } from "../../../api/player-api";
 import { Navigate } from "react-router";
-import { Text, Group, Box, LoadingOverlay, Container } from "@mantine/core";
+import {
+  Text,
+  Group,
+  Box,
+  LoadingOverlay,
+  Container,
+  Stack,
+} from "@mantine/core";
 import Summary from "../../../components/gameplay/Summary";
 
 export default function MainGameFrame() {
@@ -19,24 +26,29 @@ export default function MainGameFrame() {
 
   const onMessage = useCallback(
     (event: GameplayEventPayload) => {
-      console.log(event);
+      if (event.score === 0) {
+        setScore(0);
+      }
       setLevel(event);
       if (loading) setLoading(false);
     },
     [loading]
   );
 
-  const isGameplay = useCallback(() => {
-    return level?.levelCondition === "Gameplay" && score === 0;
-  }, [level, score]);
+  const isGameplay = () => {
+    return level?.levelCondition === "Gameplay";
+  };
 
   useEffect(() => {
-    setScore(level?.score ?? 0);
-    setShowSummary(!isGameplay() && score > 0);
+    if (score <= 0) {
+      setShowSummary(!isGameplay());
+    }
   }, [level]);
 
   useEffect(() => {
-    setShowSummary(!isGameplay() && score > 0);
+    if (score > 0) {
+      setShowSummary(true);
+    }
   }, [score]);
 
   useEffect(() => {
@@ -55,20 +67,26 @@ export default function MainGameFrame() {
   }
 
   return (
-    <Container m="auto">
+    <Stack align="center">
       <Group justify="space-between" w="max-content">
         <Text>Condition: {level.levelCondition}</Text>
         <Text>Difficulty: {level.difficulty}</Text>
         {score && <Text>Score: {score}</Text>}
         <Text>
           Time left:&nbsp;
-          {<CountdownTimer duration={level.duration} />}
+          <CountdownTimer duration={level.duration} />
         </Text>
+      </Group>
+      <Group>
+        <Text>Can you find the flag?</Text>
+        <img src={level.targetImageUrl} width="24px" height="auto" alt="Flag" />
       </Group>
       <Box pos="relative" w="fit-content">
         <LoadingOverlay
-          visible={showSummary}
+          visible={showSummary || score > 0}
+          zIndex="50"
           loaderProps={{
+            style: { zIndex: "70" },
             children: <Summary level={level} score={score ?? 0} />,
           }}
         />
@@ -81,6 +99,6 @@ export default function MainGameFrame() {
           onUserSubmitted={(newScore) => setScore(newScore)}
         />
       </Box>
-    </Container>
+    </Stack>
   );
 }
